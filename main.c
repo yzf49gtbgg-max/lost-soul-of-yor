@@ -834,7 +834,7 @@ static void update(void) {
   if (!load_checkpoint()) {
    px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
    bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3; bossSpecialAttack=0; bossAttackCount=0;
-   bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardX[2]=-4.15f; guardZ[2]=-1.10f; guardX[3]=4.20f; guardZ[3]=.85f;
+   bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardX[2]=-5.80f; guardZ[2]=.50f; guardX[3]=5.80f; guardZ[3]=-.60f;
    guardHP[0]=42.0f; guardHP[1]=52.0f; guardHP[2]=46.0f; guardHP[3]=48.0f; guardAlive[0]=guardAlive[1]=guardAlive[2]=guardAlive[3]=1;
    shardTaken[0]=shardTaken[1]=shardTaken[2]=shardTaken[3]=shardTaken[4]=0; shardCount=0; phase=1;
   }
@@ -845,7 +845,7 @@ static void update(void) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0;
-  guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
+  guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardX[2]=-5.80f; guardZ[2]=.50f; guardX[3]=5.80f; guardZ[3]=-.60f;
   guardHP[0]=42.0f; guardHP[1]=52.0f; guardHP[2]=46.0f; guardHP[3]=48.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardAttack[2]=1.4f; guardAttack[3]=1.6f; guardWindup[0]=guardWindup[1]=guardWindup[2]=guardWindup[3]=0.0f; guardAlive[0]=guardAlive[1]=guardAlive[2]=guardAlive[3]=1;
   shardTaken[0]=shardTaken[1]=shardTaken[2]=shardTaken[3]=shardTaken[4]=0; shardCount=0; phase=1;
   victory=0; defeated=0; targetLocked=0; lockedGuard=-1; guarding=0; save_checkpoint();
