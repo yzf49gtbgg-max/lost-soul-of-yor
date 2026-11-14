@@ -259,6 +259,7 @@ static void draw_world(void) {
  box(0.0f,1.30f+sinf(worldTime*2.0f)*.07f,5.05f,.12f,.22f,.12f,0xffc7a4f2);
 }
 
+static void draw_text(float x,float y,const char *str,int scale,unsigned int color);
 static void draw_limb(float x, float y, float z, float length, float width, float swing, unsigned int color) {
  sceGumPushMatrix();
  sceGumTranslate(&(ScePspFVector3){x,y,z});
@@ -400,6 +401,10 @@ static void draw_yor_ending(void) {
  box(bx+.51f,.53f,bz,.16f,.42f,.18f,0xff0e0d13);
  /* A soft aura frames the reunion without obscuring the characters. */
  box(bx,2.55f+pulse,bz,.08f,.08f,.08f,0xffd2b6f0);
+ /* Final reunion dialogue. */
+ rect(76,218,328,4,0xffbda9d4); rect(76,222,328,44,0xe51a1522); rect(76,266,328,3,0xffbda9d4);
+ draw_text(156,230,"THANK YOU LLOYD",2,0xfff0e8fa);
+ draw_text(190,248,"YOU FREED ME",1,0xffcdb5e8);
 }
 static int camera_blocked(float x, float y, float z) {
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
