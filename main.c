@@ -32,6 +32,7 @@ static int flaskCharges = 3;
 static int paused = 0;
 static int bossAwake = 0;
 static int titleScreen = 1;
+static int lockedGuard=-1;
 static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
 static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
 static int guardAlive[2]={1,1};
@@ -352,10 +353,10 @@ static int camera_blocked(float x, float y, float z) {
  return point_in_collider(x,y,z,.16f);
 }
 static void camera_pose(float *ex, float *ey, float *ez, float *tx, float *ty, float *tz) {
- float dist=5.6f, horiz, dx, dy, dz, t, desiredX, desiredY, desiredZ;
- *tx = targetLocked && bossHP>0.0f ? bx : px;
- *ty = targetLocked && bossHP>0.0f ? 1.05f : 1.18f;
- *tz = targetLocked && bossHP>0.0f ? bz : pz;
+ float dist=5.6f, horiz, dx, dy, dz, t, desiredX, desiredY, desiredZ, targetX=px, targetZ=pz;
+ if (targetLocked && lockedGuard>=0 && guardAlive[lockedGuard]) { targetX=guardX[lockedGuard]; targetZ=guardZ[lockedGuard]; }
+ else if (targetLocked && bossHP>0.0f) { targetX=bx; targetZ=bz; }
+ *tx=targetX; *ty=targetLocked?1.05f:1.18f; *tz=targetZ;
  horiz = dist*cosf(cameraPitch);
  dx = sinf(cameraYaw)*horiz;
  dy = sinf(cameraPitch)*dist;
@@ -469,12 +470,22 @@ static void update(void) {
  if (c.Buttons & PSP_CTRL_RIGHT) cameraYaw+=.025f;
  if (c.Buttons & PSP_CTRL_UP) cameraPitch=fminf(.68f,cameraPitch+.018f);
  if (c.Buttons & PSP_CTRL_DOWN) cameraPitch=fmaxf(.10f,cameraPitch-.018f);
- if ((pressed & PSP_CTRL_LTRIGGER) && bossHP>0.0f) {
-  float tx=bx-px, tz=bz-pz;
-  if (targetLocked) targetLocked=0;
-  else if (sqrtf(tx*tx+tz*tz)<10.0f) targetLocked=1;
+ if (pressed & PSP_CTRL_LTRIGGER) {
+  if (targetLocked) { targetLocked=0; lockedGuard=-1; }
+  else {
+   float best=10.0f, dx=bx-px, dz=bz-pz, d=sqrtf(dx*dx+dz*dz);
+   int gi;
+   lockedGuard=-1;
+   if (bossHP>0.0f && d<best) best=d;
+   for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
+    dx=guardX[gi]-px; dz=guardZ[gi]-pz; d=sqrtf(dx*dx+dz*dz);
+    if(d<best) { best=d; lockedGuard=gi; }
+   }
+   if(best<10.0f) targetLocked=1;
+  }
  }
- if (bossHP<=0.0f) targetLocked=0;
+ if (lockedGuard>=0 && !guardAlive[lockedGuard]) { targetLocked=0; lockedGuard=-1; }
+ if (bossHP<=0.0f && lockedGuard<0) targetLocked=0;
  ax=(c.Lx-128.0f)/128.0f; ay=(c.Ly-128.0f)/128.0f;
  if (fabsf(ax)<.16f) ax=0.0f;
  if (fabsf(ay)<.16f) ay=0.0f;
@@ -487,7 +498,7 @@ static void update(void) {
   gait+=dt*10.0f;
   if (!targetLocked) playerYaw=atan2f(-mx,-mz);
  }
- if (targetLocked) playerYaw=atan2f(-(bx-px),-(bz-pz));
+ if (targetLocked) { float lx=lockedGuard>=0?guardX[lockedGuard]:bx, lz=lockedGuard>=0?guardZ[lockedGuard]:bz; playerYaw=atan2f(-(lx-px),-(lz-pz)); }
  if (dodgeTimer>0.0f) dodgeTimer-=dt;
  if (attackTimer>0.0f) attackTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
