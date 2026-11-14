@@ -6,7 +6,7 @@ CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 LIBDIR =
 LDFLAGS =
-LIBS = -lpspgu -lpspgum -lpspdisplay -lpspge -lpspctrl -lm
+LIBS = -lpspgu -lpspgum -lpspdisplay -lpspge -lpspctrl -lpspaudio -lm
 
 EXTRA_TARGETS = EBOOT.PBP
 PSP_EBOOT_TITLE = Lost Soul of Yor
