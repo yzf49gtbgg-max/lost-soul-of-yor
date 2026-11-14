@@ -46,6 +46,7 @@ Then launch it from PPSSPP Games. This is an unsigned homebrew package, not a co
 - Triangle: heavy attack
 - Circle: dodge
 - R: hold to guard; guarding drains stamina and a successful block costs additional stamina
+- Select: consume one of three healing flasks to restore up to 35 HP
 - Cross: retry the fight after defeat or restart after victory
 - Start: exit
 
