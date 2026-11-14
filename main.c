@@ -35,6 +35,7 @@ static int bossAwake = 0;
 static int titleScreen = 1;
 static int lockedGuard=-1;
 static int tutorialScreen=0;
+static int storyScreen=0;
 static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
 static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
 static int guardAlive[2]={1,1};
@@ -482,6 +483,14 @@ static void draw_tutorial_screen(void) {
  draw_text(78,214,"DEFEAT GUARDS",2,0xffd7b8f2);
  draw_text(280,232,"PRESS CROSS",1,0xffe5d9f0);
 }
+static void draw_story_screen(void) {
+ rect(0,0,480,272,0xc6100e18);
+ rect(42,30,396,3,0xff665578); rect(42,33,396,204,0x9e211b2a); rect(42,237,396,3,0xff665578);
+ draw_text(150,60,"YOR IS LOST",3,0xffe5d9f0);
+ draw_text(92,116,"LLOYD MUST FIND HER",2,0xffffffff);
+ draw_text(118,151,"ENTER THE RUINS",2,0xffcdb5e8);
+ draw_text(280,215,"PRESS CROSS",1,0xffe5d9f0);
+}
 static void draw_hud(void) {
  float php=fmaxf(0.0f,fminf(1.0f,playerHP/100.0f));
  float st=fmaxf(0.0f,fminf(1.0f,stamina/100.0f));
@@ -528,7 +537,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else draw_hud();
+ draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -541,7 +550,8 @@ static void update(void) {
  sceCtrlPeekBufferPositive(&c,1);
  pressed=c.Buttons & ~old; old=c.Buttons;
  if (titleScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) { titleScreen=0; tutorialScreen=1; } return; }
- if (tutorialScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) tutorialScreen=0; return; }
+ if (tutorialScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) { tutorialScreen=0; storyScreen=1; } return; }
+ if (storyScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) storyScreen=0; return; }
  if (paused) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) paused=0; return; }
  if (pressed & PSP_CTRL_START) { paused=1; return; }
  if (c.Buttons & PSP_CTRL_LEFT) cameraYaw-=.025f;
