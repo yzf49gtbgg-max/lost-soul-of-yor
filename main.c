@@ -337,6 +337,42 @@ static void draw_world(void) {
  box(0.0f,.42f,5.05f,.72f,.16f,.58f,0xff51445f);
  box(0.0f,.88f+sinf(worldTime*2.0f)*.07f,5.05f,.20f,.76f,.20f,0xff7a4bb4);
  box(0.0f,1.30f+sinf(worldTime*2.0f)*.07f,5.05f,.12f,.22f,.12f,0xffc7a4f2);
+
+ /* Two weathered sentinels flank the approach; their violet eyes wake with Yor. */
+ box(-6.95f,.72f,4.10f,.70f,1.44f,.62f,0xff24212c);
+ box(-6.95f,1.62f,4.10f,.82f,.42f,.72f,0xff393341);
+ box(-7.13f,1.66f,3.78f,.10f,.08f,.035f,bossAwake?0xffb76bdf:0xff51465c);
+ box(-6.77f,1.66f,3.78f,.10f,.08f,.035f,bossAwake?0xffb76bdf:0xff51465c);
+ box(-6.95f,.18f,4.10f,1.02f,.36f,.92f,0xff393341);
+ box( 6.95f,.72f,4.10f,.70f,1.44f,.62f,0xff24212c);
+ box( 6.95f,1.62f,4.10f,.82f,.42f,.72f,0xff393341);
+ box( 6.77f,1.66f,3.78f,.10f,.08f,.035f,bossAwake?0xffb76bdf:0xff51465c);
+ box( 7.13f,1.66f,3.78f,.10f,.08f,.035f,bossAwake?0xffb76bdf:0xff51465c);
+ box( 6.95f,.18f,4.10f,1.02f,.36f,.92f,0xff393341);
+
+ /* Fallen roof beams and scattered masonry make the route feel abandoned. */
+ box(-6.15f,.16f,6.45f,1.55f,.30f,.38f,0xff514957);
+ box( 5.90f,.12f,6.80f,1.85f,.24f,.42f,0xff403b47);
+ box(-5.65f,.10f,-7.45f,.82f,.20f,1.10f,0xff514957);
+ box( 5.75f,.12f,-3.75f,1.05f,.24f,.72f,0xff514957);
+ box(-3.85f,.08f,5.95f,.72f,.16f,.62f,0xff39343e);
+ box( 3.55f,.08f,6.20f,.82f,.16f,.55f,0xff39343e);
+
+ /* Ancient braziers cast a moving violet flame beside the sealed gate. */
+ box(-3.35f,.46f,-3.10f,.42f,.92f,.42f,0xff302b37);
+ box(-3.35f,.98f,-3.10f,.58f,.14f,.58f,0xff55475f);
+ ellipsoid(-3.35f,1.30f+sinf(worldTime*4.0f)*.10f,-3.10f,.16f,.34f,.16f,
+           bossAwake?0xffc28af0:0xff704b99);
+ box(3.35f,.46f,-3.10f,.42f,.92f,.42f,0xff302b37);
+ box(3.35f,.98f,-3.10f,.58f,.14f,.58f,0xff55475f);
+ ellipsoid(3.35f,1.30f+sinf(worldTime*4.0f+1.2f)*.10f,-3.10f,.16f,.34f,.16f,
+           bossAwake?0xffc28af0:0xff704b99);
+
+ /* A cracked circular seal marks the threshold to Yor's chamber. */
+ box(0.0f,.035f,-2.95f,3.10f,.055f,.16f,0xff59416f);
+ box(0.0f,.040f,-2.95f,.16f,.060f,2.10f,0xff59416f);
+ box(-1.05f,.045f,-2.95f,.12f,.065f,1.30f,0xff44354f);
+ box( 1.05f,.045f,-2.95f,.12f,.065f,1.30f,0xff44354f);
 }
 
 static void draw_text(float x,float y,const char *str,int scale,unsigned int color);
