@@ -133,7 +133,7 @@ static void save_checkpoint(void) {
  struct CheckpointData d;
  SceUID fd;
  memset(&d,0,sizeof(d));
- d.magic=0x594F5253; d.version=1;
+ d.magic=0x594F5253; d.version=2;
  d.px=px; d.pz=pz; d.playerHP=playerHP; d.stamina=stamina; d.bossHP=bossHP;
  d.flaskCharges=flaskCharges; d.phase=phase; d.bossAwake=bossAwake; d.shardCount=shardCount;
  memcpy(d.shardTaken,shardTaken,sizeof(shardTaken));
@@ -151,7 +151,7 @@ static int load_checkpoint(void) {
  int n;
  if(fd<0) return 0;
  n=sceIoRead(fd,&d,sizeof(d)); sceIoClose(fd);
- if(n!=(int)sizeof(d) || d.magic!=0x594F5253 || d.version!=1) return 0;
+ if(n!=(int)sizeof(d) || d.magic!=0x594F5253 || d.version!=2) return 0;
  px=d.px; pz=d.pz; playerHP=fmaxf(1.0f,fminf(100.0f,d.playerHP));
  stamina=fmaxf(0.0f,fminf(100.0f,d.stamina)); bossHP=fmaxf(0.0f,fminf(100.0f,d.bossHP));
  flaskCharges=d.flaskCharges<0?0:(d.flaskCharges>3?3:d.flaskCharges);
@@ -790,7 +790,7 @@ static void update(void) {
    int gi;
    lockedGuard=-1;
    if (bossHP>0.0f && bossAwake && d<best) best=d;
-   for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
+   for(gi=0;gi<4;gi++) if(guardAlive[gi]) {
     dx=guardX[gi]-px; dz=guardZ[gi]-pz; d=sqrtf(dx*dx+dz*dz);
     if(d<best) { best=d; lockedGuard=gi; }
    }
@@ -846,8 +846,8 @@ static void update(void) {
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0;
   guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
-  guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardAttack[2]=1.4f; guardAttack[3]=1.6f; guardWindup[0]=guardWindup[1]=guardWindup[2]=guardWindup[3]=0.0f; guardAlive[0]=guardAlive[1]=guardAlive[2]=guardAlive[3]=1;
-  shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0; phase=1;
+  guardHP[0]=42.0f; guardHP[1]=52.0f; guardHP[2]=46.0f; guardHP[3]=48.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardAttack[2]=1.4f; guardAttack[3]=1.6f; guardWindup[0]=guardWindup[1]=guardWindup[2]=guardWindup[3]=0.0f; guardAlive[0]=guardAlive[1]=guardAlive[2]=guardAlive[3]=1;
+  shardTaken[0]=shardTaken[1]=shardTaken[2]=shardTaken[3]=shardTaken[4]=0; shardCount=0; phase=1;
   victory=0; defeated=0; targetLocked=0; lockedGuard=-1; guarding=0; save_checkpoint();
  }
  if (!victory && !defeated) {
@@ -855,7 +855,7 @@ static void update(void) {
    float sx=px-shardX[si], sz=pz-shardZ[si];
    if (sx*sx+sz*sz<1.05f) { shardTaken[si]=1; shardCount++; stamina=fminf(100.0f,stamina+18.0f); save_checkpoint(); }
   }
-  for (int gi=0;gi<2;gi++) {
+  for (int gi=0;gi<4;gi++) {
    float gx=px-guardX[gi], gz=pz-guardZ[gi], gd=sqrtf(gx*gx+gz*gz)+.001f;
    if (!guardAlive[gi]) continue;
    if (gd>1.05f) {
@@ -899,7 +899,7 @@ static void update(void) {
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f; trigger_sfx(2);
-   if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; save_checkpoint(); } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
+   if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; save_checkpoint(); } else { int i; for(i=0;i<4;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
