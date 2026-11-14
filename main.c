@@ -22,7 +22,7 @@ static unsigned int list[262144] __attribute__((aligned(16)));
 static int running = 1;
 static float px = 0.0f, pz = 6.0f, playerYaw = 0.0f;
 static float bx = 0.0f, bz = -5.7f;
-static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f;
+static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f, staminaRegenDelay = 0.0f;
 static float attackTimer = 0.0f, bossAttackTimer = 1.0f, bossWindup = 0.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
 static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
@@ -311,7 +311,7 @@ static void update(void) {
  guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
-  bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
+  bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f;
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
@@ -323,22 +323,23 @@ static void update(void) {
  }
  if (!victory && !defeated) {
   if ((pressed&PSP_CTRL_CIRCLE) && stamina>=18.0f && dodgeTimer<=0.0f) {
-   dodgeTimer=.30f; stamina-=18.0f;
+   dodgeTimer=.30f; stamina-=18.0f; staminaRegenDelay=.75f;
    if (playerMoving) { dodgeX=mx; dodgeZ=mz; }
    else { dodgeX=-sinf(playerYaw); dodgeZ=-cosf(playerYaw); }
   }
   if (dodgeTimer>0.0f) move_player(dodgeX*5.8f*dt,dodgeZ*5.8f*dt);
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
-   attackTimer=.36f; stamina-=10.0f;
+   attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
    if (fabsf(px-bx)<1.55f && fabsf(pz-bz)<1.85f) { bossHP-=8.0f; hitFlash=.12f; }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
-   attackTimer=.68f; stamina-=25.0f;
+   attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
    if (fabsf(px-bx)<1.85f && fabsf(pz-bz)<2.15f) { bossHP-=17.0f; hitFlash=.18f; }
   }
-  if (guarding) stamina=fmaxf(0.0f,stamina-.22f);
-  else if (stamina<100.0f) stamina=fminf(100.0f,stamina+.22f);
+  if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
+  else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
+  else if (stamina<100.0f) stamina=fminf(100.0f,stamina+.14f);
   if (bossHP<=50.0f) phase=2;
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
