@@ -118,6 +118,13 @@ static void move_boss(float dx, float dz) {
  if (bz > WORLD_MAX_Z-.5f) bz = WORLD_MAX_Z-.5f;
 }
 
+static int player_faces_boss(void) {
+ float dx=bx-px, dz=bz-pz;
+ float distance=sqrtf(dx*dx+dz*dz)+.001f;
+ float facing=dx*(-sinf(playerYaw))+dz*(-cosf(playerYaw));
+ return facing>distance*.35f;
+}
+
 static int player_can_hit(float range) {
  float dx=bx-px, dz=bz-pz;
  float distance=sqrtf(dx*dx+dz*dz)+.001f;
@@ -356,7 +363,7 @@ static void update(void) {
      gives the player a readable dodge/guard window instead of instant damage. */
   if (bossStrikePending) {
    if (distance<2.55f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
-    if (guarding && stamina>=12.0f) { stamina-=12.0f; hitFlash=.10f; }
+    if (guarding && stamina>=12.0f && player_faces_boss()) { stamina-=12.0f; hitFlash=.10f; }
     else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; }
    }
    bossStrikePending=0;
