@@ -29,6 +29,7 @@ static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
 static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0, bossStrikePending = 0;
 static int flaskCharges = 3;
+static int paused = 0;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -304,6 +305,10 @@ static void draw_hud(void) {
  rect(18,246,444,2,targetLocked?0xffa36acb:0xff62566c);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
+ if (paused) {
+  rect(132,70,216,4,0xffbda9d4); rect(132,74,216,124,0xff211d2a); rect(132,198,216,4,0xffbda9d4);
+  rect(164,102,152,7,0xffd9c9ed); rect(164,126,112,5,0xff71647f); rect(164,150,132,5,0xff71647f);
+ }
 }
 static void init_gu(void) {
  void *fb0=(void*)0x44000000, *fb1=(void*)0x44088000, *z=(void*)0x44110000;
@@ -333,7 +338,8 @@ static void update(void) {
  float vx, vz, distance;
  sceCtrlPeekBufferPositive(&c,1);
  pressed=c.Buttons & ~old; old=c.Buttons;
- if (c.Buttons & PSP_CTRL_START) running=0;
+ if (paused) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) paused=0; return; }
+ if (pressed & PSP_CTRL_START) { paused=1; return; }
  if (c.Buttons & PSP_CTRL_LEFT) cameraYaw-=.025f;
  if (c.Buttons & PSP_CTRL_RIGHT) cameraYaw+=.025f;
  if (c.Buttons & PSP_CTRL_UP) cameraPitch=fminf(.68f,cameraPitch+.018f);
