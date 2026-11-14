@@ -1,0 +1,13 @@
+# PSPSDK build output
+*.o
+*.elf
+*.prx
+*.sfo
+EBOOT.PBP
+
+# CMake output
+/build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile.cmake
