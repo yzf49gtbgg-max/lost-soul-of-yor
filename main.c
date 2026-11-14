@@ -392,12 +392,12 @@ static const unsigned char *font_rows(char c) {
  static const unsigned char T[7]={31,4,4,4,4,4,4}, U[7]={17,17,17,17,17,17,14};
  static const unsigned char Y[7]={17,17,10,4,4,4,4}, D[7]={30,17,17,17,17,17,30};
  static const unsigned char G[7]={14,17,16,23,17,17,14};
- static const unsigned char C[7]={14,17,16,16,16,17,14}, H[7]={17,17,17,31,17,17,17};
+ static const unsigned char C[7]={14,17,16,16,16,17,14}, HGLYPH[7]={17,17,17,31,17,17,17};
  static const unsigned char K[7]={17,18,20,24,20,18,17}, M[7]={17,27,21,21,17,17,17};
  static const unsigned char V[7]={17,17,17,17,17,10,4};
  switch(c) {
   case 'A': return A; case 'D': return D; case 'E': return E; case 'F': return F;
-  case 'G': return G; case 'H': return H; case 'I': return I; case 'K': return K; case 'M': return M; case 'L': return L; case 'N': return N;
+  case 'G': return G; case 'H': return HGLYPH; case 'I': return I; case 'K': return K; case 'M': return M; case 'L': return L; case 'N': return N;
   case 'O': return O; case 'P': return P; case 'R': return R; case 'S': return S;
   case 'T': return T; case 'U': return U; case 'V': return V; case 'C': return C; case 'Y': return Y; default: return blank;
  }
