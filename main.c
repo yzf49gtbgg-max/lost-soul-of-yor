@@ -518,6 +518,7 @@ static void draw_yor_spirit(void) {
  box(bx-.55f,2.35f+hover,bz+.06f,.08f,.08f,.08f,0xffd5c2f0);
  sceGumPopMatrix();
 }
+static void draw_ar(float x,float y,const char *str,int scale,unsigned int color);
 static void draw_yor_ending(void) {
  float pulse=sinf(worldTime*2.0f)*.06f;
  /* The spirit dissolves into a floating violet gem as Yor returns to her human form. */
