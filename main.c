@@ -24,7 +24,7 @@ static float px = 0.0f, pz = 6.0f, playerYaw = 0.0f;
 static float bx = 0.0f, bz = -5.7f;
 static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f, staminaRegenDelay = 0.0f;
 static float attackTimer = 0.0f, bossAttackTimer = 1.0f, bossWindup = 0.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
-static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
+static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f, worldTime = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
 static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0, bossStrikePending = 0;
@@ -225,19 +225,40 @@ static void draw_lloyd(void) {
  sceGumPopMatrix();
 }
 static void draw_yor_spirit(void) {
- unsigned int body = phase==1 ? 0xffd9d6e2 : 0xffaaa0bd;
- /* A visible ground flare warns the player before Yor's committed strike. */
- if (bossWindup > 0.0f) box(bx,.035f,bz,2.25f,.045f,2.25f,0xff633b83);
- box(bx,0.82f,bz,.84f,1.45f,.60f,body);
- box(bx,1.75f,bz,.46f,.48f,.43f,0xffeeeaf4);
- box(bx-.64f,.95f,bz,.22f,.88f,.24f,0xffb9b1c9);
- box(bx+.64f,.95f,bz,.22f,.88f,.24f,0xffb9b1c9);
- box(bx+1.02f,.86f,bz-.24f,.12f,1.72f,.12f,0xff261a32);
- box(bx+1.02f,1.78f,bz-.24f,.20f,.46f,.20f,0xff572a86);
- box(bx+1.02f,.86f,bz-.24f,.22f,.62f,.22f,0xff17111f);
- /* restrained violet shards mark the existing spirit weapon. */
- box(bx+.80f,1.34f,bz-.31f,.12f,.12f,.12f,0xff9d5ee8);
- box(bx+1.23f,1.48f,bz-.21f,.10f,.10f,.10f,0xff7540b5);
+ float hover=sinf(worldTime*2.1f)*.10f;
+ float sway=sinf(worldTime*1.35f)*.075f;
+ float hair=sinf(worldTime*1.8f)*.045f;
+ unsigned int robe=phase==1?0xffe5e1ec:0xffbdb1d2;
+ unsigned int shade=phase==1?0xffc9c2d5:0xff9586b2;
+ /* A warning sigil stays on the floor while Yor commits to her strike. */
+ if (bossWindup>0.0f) box(bx,.035f,bz,2.25f,.045f,2.25f,0xff633b83);
+ /* Hovering layered spirit robes, with separated trailing tatters. */
+ box(bx,1.02f+hover,bz,.92f,1.18f,.66f,robe);
+ box(bx,1.45f+hover,bz+.015f,.72f,.92f,.58f,0xfff0edf5);
+ box(bx+sway*.4f,.43f+hover,bz-.04f,.76f,.78f,.58f,shade);
+ box(bx-.34f-sway,.25f+hover,bz-.10f,.20f,.62f,.22f,robe);
+ box(bx+.36f+sway,.28f+hover,bz-.08f,.18f,.58f,.20f,robe);
+ /* Veiled head, long dark hair and pale spectral face. */
+ box(bx,1.92f+hover,bz,.48f,.50f,.44f,0xfff2eff8);
+ box(bx,2.13f+hover,bz-.035f,.52f,.25f,.48f,0xffd8d2e3);
+ box(bx,1.92f+hover,bz-.255f,.38f,.23f,.035f,0xff756b86);
+ box(bx-.22f,1.58f+hover+hair,bz-.12f,.13f,.82f,.16f,0xff282331);
+ box(bx+.22f,1.56f+hover-hair,bz-.12f,.13f,.86f,.16f,0xff282331);
+ box(bx,1.55f+hover,bz+.25f,.40f,.92f,.12f,0xff302a3b);
+ /* Sleeves drift away from the body like torn cloth. */
+ box(bx-.62f-sway,1.12f+hover,bz,.24f,.92f,.28f,robe);
+ box(bx+.62f+sway,1.10f+hover,bz,.24f,.90f,.28f,robe);
+ box(bx-.72f-sway,.63f+hover,bz-.03f,.18f,.42f,.20f,shade);
+ box(bx+.72f+sway,.61f+hover,bz-.03f,.18f,.42f,.20f,shade);
+ /* Black spirit blade with a violet core and crossguard. */
+ box(bx+.94f,1.12f+hover,bz-.25f,.15f,1.48f,.16f,0xff17111f);
+ box(bx+.94f,1.20f+hover,bz-.25f,.055f,1.18f,.07f,0xff7138a9);
+ box(bx+.94f,1.88f+hover,bz-.25f,.36f,.10f,.20f,0xff30213f);
+ box(bx+.94f,.34f+hover,bz-.25f,.22f,.22f,.22f,0xff241a31);
+ /* Small drifting fragments make the spirit silhouette readable in motion. */
+ box(bx-.82f-sway,1.78f+hover,bz-.12f,.10f,.10f,.10f,0xffa985dc);
+ box(bx+.82f+sway,1.42f+hover,bz+.02f,.09f,.12f,.09f,0xff8051c0);
+ box(bx-.55f,2.35f+hover,bz+.06f,.08f,.08f,.08f,0xffd5c2f0);
 }
 static int camera_blocked(float x, float y, float z) {
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
@@ -301,6 +322,7 @@ static void update(void) {
  SceCtrlData c;
  static unsigned int old=0;
  float dt=1.0f/60.0f, ax, ay, mx, mz, length;
+ worldTime+=dt;
  unsigned int pressed;
  float vx, vz, distance;
  sceCtrlPeekBufferPositive(&c,1);
