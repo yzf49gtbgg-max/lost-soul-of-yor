@@ -23,7 +23,7 @@ static int running = 1;
 static float px = 0.0f, pz = 6.0f, playerYaw = 0.0f;
 static float bx = 0.0f, bz = -5.7f;
 static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f, staminaRegenDelay = 0.0f;
-static float attackTimer = 0.0f, bossAttackTimer = 1.0f, bossWindup = 0.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
+static float attackTimer = 0.0f, bossAttackTimer = 1.0f, bossWindup = 0.0f, dodgeTimer = 0.0f, hitFlash = 0.0f, bossFlash = 0.0f;
 static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f, worldTime = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
@@ -235,7 +235,7 @@ static void draw_yor_spirit(void) {
  float hover=sinf(worldTime*2.1f)*.10f;
  float sway=sinf(worldTime*1.35f)*.075f;
  float hair=sinf(worldTime*1.8f)*.045f;
- unsigned int robe=phase==1?0xffe5e1ec:0xffbdb1d2;
+ unsigned int robe=bossFlash>0.0f?0xffffffff:(phase==1?0xffe5e1ec:0xffbdb1d2);
  unsigned int shade=phase==1?0xffc9c2d5:0xff9586b2;
  /* A warning sigil stays on the floor while Yor commits to her strike. */
  if (bossWindup>0.0f) box(bx,.035f,bz,2.25f,.045f,2.25f,0xff633b83);
@@ -395,6 +395,7 @@ static void update(void) {
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
  if (bossWindup>0.0f) { bossWindup-=dt; if (bossWindup<=0.0f) { bossWindup=0.0f; bossStrikePending=1; } }
  if (hitFlash>0.0f) hitFlash-=dt;
+  if (bossFlash>0.0f) bossFlash-=dt;
  if (hurtTimer>0.0f) hurtTimer-=dt;
  guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
@@ -429,11 +430,11 @@ static void update(void) {
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
    attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
-   if (player_can_hit(2.35f)) { bossHP-=8.0f; hitFlash=.12f; }
+   if (player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
-   if (player_can_hit(2.85f)) { bossHP-=17.0f; hitFlash=.18f; }
+   if (player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
