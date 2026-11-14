@@ -34,6 +34,9 @@ static int bossSpecialAttack=0, bossAttackCount=0;
 static int flaskCharges = 3;
 static int paused = 0;
 static int bossAwake = 0;
+static int yorTalkStage = 0;
+static int yorVisitReady = 0;
+static float yorVisitCooldown = 12.0f;
 static int titleScreen = 1;
 static int lockedGuard=-1;
 static int tutorialScreen=0;
@@ -625,6 +628,19 @@ static void draw_story_screen(void) {
  draw_text(118,151,"ENTER THE RUINS",2,0xffcdb5e8);
  draw_text(280,215,"PRESS CROSS",1,0xffe5d9f0);
 }
+static void draw_yor_at_altar(void) {
+ float x=1.55f, z=5.05f, h=sinf(worldTime*2.0f)*.07f;
+ unsigned int robe=0xffd8d0e5;
+ box(x,.88f+h,z,.58f,1.48f,.42f,robe);
+ box(x,1.48f+h,z,.48f,.66f,.40f,0xffeeeaf5);
+ ellipsoid(x,1.96f+h,z,.19f,.22f,.17f,0xfff4eff8);
+ box(x,2.14f+h,z,.42f,.22f,.38f,0xffd7d0e2);
+ box(x-.17f,1.70f+h,z-.08f,.10f,.82f,.13f,0xff211c2b);
+ box(x+.17f,1.70f+h,z-.08f,.10f,.82f,.13f,0xff211c2b);
+ box(x,1.88f+h,z-.19f,.26f,.035f,.025f,0xff8d6268);
+ box(x-.42f,1.12f+h,z,.16f,.78f,.20f,robe);
+ box(x+.42f,1.12f+h,z,.16f,.78f,.20f,robe);
+}
 static void draw_hud(void) {
  float php=fmaxf(0.0f,fminf(1.0f,playerHP/100.0f));
  float st=fmaxf(0.0f,fminf(1.0f,stamina/100.0f));
@@ -650,6 +666,22 @@ static void draw_hud(void) {
  draw_text(365,28,"MEMORY SHARDS",1,0xffbba2d6);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
+ if (yorVisitReady || yorTalkStage>0) {
+  rect(74,202,332,4,0xffbda9d4); rect(74,206,332,58,0xe51a1522); rect(74,264,332,3,0xffbda9d4);
+  if (yorTalkStage==0) {
+   draw_text(137,222,"TALK TO YOR",2,0xfff0e8fa);
+   draw_text(128,244,"PRESS CROSS",1,0xffcdb5e8);
+  } else if (yorTalkStage==1) {
+   draw_text(135,220,"I AM HERE",2,0xfff0e8fa);
+   draw_text(110,244,"YOU FOUND ME",1,0xffcdb5e8);
+  } else if (yorTalkStage==2) {
+   draw_text(124,220,"KEEP GOING",2,0xfff0e8fa);
+   draw_text(102,244,"MY MEMORY RETURNS",1,0xffcdb5e8);
+  } else {
+   draw_text(132,220,"THANK YOU",2,0xfff0e8fa);
+   draw_text(114,244,"I WILL WAIT HERE",1,0xffcdb5e8);
+  }
+ }
  if (paused) {
   rect(132,70,216,4,0xffbda9d4); rect(132,74,216,124,0xff211d2a); rect(132,198,216,4,0xffbda9d4);
   rect(164,102,152,7,0xffd9c9ed); rect(164,126,112,5,0xff71647f); rect(164,150,132,5,0xff71647f);
@@ -675,7 +707,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) { if (bossAwake) draw_yor_spirit(); else draw_yor_veiled(); } else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
+ draw_world(); if (yorVisitReady || yorTalkStage>0) draw_yor_at_altar(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) { if (bossAwake) draw_yor_spirit(); else draw_yor_veiled(); } else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -691,6 +723,15 @@ static void update(void) {
  if (tutorialScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) { tutorialScreen=0; storyScreen=1; } return; }
  if (storyScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) storyScreen=0; return; }
  if (paused) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) paused=0; return; }
+ if (yorTalkStage>0) {
+  if (pressed & PSP_CTRL_CROSS) {
+   yorTalkStage++;
+   if (yorTalkStage>3) { yorTalkStage=0; yorVisitReady=0; yorVisitCooldown=worldTime+55.0f; }
+  }
+  return;
+ }
+ if (fabsf(px)<2.45f && pz>3.65f && pz<6.45f && worldTime>=yorVisitCooldown)
+  yorVisitReady=1;
  if (pressed & PSP_CTRL_START) { paused=1; return; }
  if (c.Buttons & PSP_CTRL_LEFT) cameraYaw-=.025f;
  if (c.Buttons & PSP_CTRL_RIGHT) cameraYaw+=.025f;
@@ -787,8 +828,10 @@ static void update(void) {
    }
    if (gd<1.75f && guardAttack[gi]<=0.0f && guardWindup[gi]<=0.0f) guardWindup[gi]=.42f;
   }
-  /* Cross rests at the entrance altar: refill flasks, health and stamina. */
-  if ((pressed&PSP_CTRL_CROSS) && fabsf(px)<1.45f && pz>4.15f && pz<6.25f) {
+  /* Yor gets priority when she visits; otherwise Cross rests and saves. */
+  if ((pressed&PSP_CTRL_CROSS) && yorVisitReady && fabsf(px)<2.45f && pz>3.65f && pz<6.45f) {
+   yorTalkStage=1; targetLocked=0; lockedGuard=-1;
+  } else if ((pressed&PSP_CTRL_CROSS) && fabsf(px)<1.45f && pz>4.15f && pz<6.25f) {
    playerHP=100.0f; stamina=100.0f; flaskCharges=3; staminaRegenDelay=0.0f; hitFlash=.18f; save_checkpoint();
   }
   /* Select consumes one of three flasks and restores health, never exceeding max HP. */
