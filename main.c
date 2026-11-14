@@ -657,7 +657,7 @@ static void draw_tutorial_screen(void) {
  draw_ar(235,78,"الحركة بالعصا",2,0xffffffff);
  draw_ar(215,100,"هجوم مربع",2,0xffffffff);
  draw_ar(215,122,"تفادي دائرة",2,0xffffffff);
- draw_ar(205,144,"صد ار تثبيت ال",2,0xffffffff);
+ draw_ar(205,144,"ار للصد وال للتثبيت",2,0xffffffff);
  draw_ar(225,166,"علاج اختيار",2,0xffc7a4f2);
  draw_ar(225,192,"اجمع الشظايا",2,0xffd7b8f2);
  draw_ar(215,214,"اهزم الحراس",2,0xffd7b8f2);
@@ -706,6 +706,8 @@ static void draw_hud(void) {
  rect(18,246,444,2,targetLocked?0xffa36acb:0xff62566c);
  if (bossAwake) draw_ar(205,48,"بوابة يور",1,0xffe1d1f0);
  else draw_ar(190,48,"طريق الاطلال",1,0xffc8b8dc);
+ if (bossAwake) draw_ar(168,68,"واجه يور واستعد للمرحلة الثانية",1,0xffe2d2f2);
+ else draw_ar(145,68,"اهزم الحراس واجمع شظايا الذاكرة",1,0xffd7c5e9);
  draw_ar(375,28,"شظايا الذاكرة",1,0xffbba2d6);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
