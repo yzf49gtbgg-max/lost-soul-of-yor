@@ -403,7 +403,7 @@ static void draw_ruin_guard(int n) {
  box(-.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
  box(.38f,1.48f+pulse+telegraph,0.0f,.18f,.72f,.22f,armor);
  if(guardWindup[n]>0.0f) {
-  box(x,.035f,z,1.35f,.035f,1.35f,0xff71365f);
+  box(0.0f,.035f,0.0f,1.35f,.035f,1.35f,0xff71365f);
   box(.53f,1.28f+pulse+telegraph,-.20f,.10f,.96f,.10f,0xffd49bce);
  }
  box(-.18f,.40f,0.0f,.24f,.76f,.27f,0xff24232d);
