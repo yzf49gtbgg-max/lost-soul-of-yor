@@ -1,6 +1,7 @@
 #include <pspkernel.h>
 #include <pspdisplay.h>
 #include <pspctrl.h>
+#include <pspiofilemgr.h>
 #include <pspgu.h>
 #include <pspgum.h>
 #include <math.h>
@@ -44,6 +45,15 @@ static int shardCount=0;
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
 struct Collider { float x, y, z, hx, hy, hz; };
+struct CheckpointData {
+ unsigned int magic, version;
+ float px,pz,playerHP,stamina,bossHP;
+ int flaskCharges,phase,bossAwake,shardCount;
+ int shardTaken[3],guardAlive[2];
+ float guardX[2],guardZ[2],guardHP[2];
+};
+static const char savePath[]="ms0:/PSP/SAVEDATA/LOSTSOULYOR/DATA.BIN";
+
 
 static const struct V3C cube[] = {
  {0xffffffff,-.5f,-.5f,-.5f},{0xffffffff,.5f,-.5f,-.5f},{0xffffffff,.5f,.5f,-.5f},{0xffffffff,-.5f,.5f,-.5f},
@@ -64,6 +74,40 @@ static const struct Collider colliders[] = {
 };
 #define COLLIDER_COUNT (sizeof(colliders) / sizeof(colliders[0]))
 
+static void save_checkpoint(void) {
+ struct CheckpointData d;
+ SceUID fd;
+ memset(&d,0,sizeof(d));
+ d.magic=0x594F5253; d.version=1;
+ d.px=px; d.pz=pz; d.playerHP=playerHP; d.stamina=stamina; d.bossHP=bossHP;
+ d.flaskCharges=flaskCharges; d.phase=phase; d.bossAwake=bossAwake; d.shardCount=shardCount;
+ memcpy(d.shardTaken,shardTaken,sizeof(shardTaken));
+ memcpy(d.guardAlive,guardAlive,sizeof(guardAlive));
+ memcpy(d.guardX,guardX,sizeof(guardX)); memcpy(d.guardZ,guardZ,sizeof(guardZ));
+ memcpy(d.guardHP,guardHP,sizeof(guardHP));
+ sceIoMkdir("ms0:/PSP/SAVEDATA",0777);
+ sceIoMkdir("ms0:/PSP/SAVEDATA/LOSTSOULYOR",0777);
+ fd=sceIoOpen(savePath,PSP_O_WRONLY|PSP_O_CREAT|PSP_O_TRUNC,0777);
+ if(fd>=0) { sceIoWrite(fd,&d,sizeof(d)); sceIoClose(fd); }
+}
+static int load_checkpoint(void) {
+ struct CheckpointData d;
+ SceUID fd=sceIoOpen(savePath,PSP_O_RDONLY,0777);
+ int n;
+ if(fd<0) return 0;
+ n=sceIoRead(fd,&d,sizeof(d)); sceIoClose(fd);
+ if(n!=(int)sizeof(d) || d.magic!=0x594F5253 || d.version!=1) return 0;
+ px=d.px; pz=d.pz; playerHP=fmaxf(1.0f,fminf(100.0f,d.playerHP));
+ stamina=fmaxf(0.0f,fminf(100.0f,d.stamina)); bossHP=fmaxf(0.0f,fminf(100.0f,d.bossHP));
+ flaskCharges=d.flaskCharges<0?0:(d.flaskCharges>3?3:d.flaskCharges);
+ phase=d.phase==2?2:1; bossAwake=d.bossAwake?1:0;
+ shardCount=d.shardCount<0?0:(d.shardCount>3?3:d.shardCount);
+ memcpy(shardTaken,d.shardTaken,sizeof(shardTaken));
+ memcpy(guardAlive,d.guardAlive,sizeof(guardAlive));
+ memcpy(guardX,d.guardX,sizeof(guardX)); memcpy(guardZ,d.guardZ,sizeof(guardZ));
+ memcpy(guardHP,d.guardHP,sizeof(guardHP));
+ return 1;
+}
 static int exit_cb(int a, int b, void *c) { (void)a; (void)b; (void)c; running = 0; return 0; }
 static int cb_thread(SceSize a, void *b) {
  int id;
@@ -558,7 +602,7 @@ static void update(void) {
  if (!victory && !defeated) {
   for (int si=0;si<3;si++) if (!shardTaken[si]) {
    float sx=px-shardX[si], sz=pz-shardZ[si];
-   if (sx*sx+sz*sz<1.05f) { shardTaken[si]=1; shardCount++; stamina=fminf(100.0f,stamina+18.0f); }
+   if (sx*sx+sz*sz<1.05f) { shardTaken[si]=1; shardCount++; stamina=fminf(100.0f,stamina+18.0f); save_checkpoint(); }
   }
   for (int gi=0;gi<2;gi++) {
    float gx=px-guardX[gi], gz=pz-guardZ[gi], gd=sqrtf(gx*gx+gz*gz)+.001f;
@@ -573,7 +617,7 @@ static void update(void) {
   }
   /* Cross rests at the entrance altar: refill flasks, health and stamina. */
   if ((pressed&PSP_CTRL_CROSS) && fabsf(px)<1.45f && pz>4.15f && pz<6.25f) {
-   playerHP=100.0f; stamina=100.0f; flaskCharges=3; staminaRegenDelay=0.0f; hitFlash=.18f;
+   playerHP=100.0f; stamina=100.0f; flaskCharges=3; staminaRegenDelay=0.0f; hitFlash=.18f; save_checkpoint();
   }
   /* Select consumes one of three flasks and restores health, never exceeding max HP. */
   if ((pressed&PSP_CTRL_SELECT) && flaskCharges>0 && playerHP<100.0f) {
@@ -590,11 +634,11 @@ static void update(void) {
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
    attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
-   if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
+   if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; save_checkpoint(); } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
-   if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
+   if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; save_checkpoint(); } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
@@ -621,11 +665,11 @@ static void update(void) {
    }
   }
   if (playerHP<0.0f) playerHP=0.0f;
-  if (playerHP<=0.0f) { defeated=1; guarding=0; targetLocked=0; }
+  if (playerHP<=0.0f) { defeated=1; guarding=0; targetLocked=0; save_checkpoint(); }
  }
 }
 int main(void) {
- setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); init_gu();
+ setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); init_gu();
  while (running) { update(); frame(); }
  sceGuTerm(); sceKernelExitGame(); return 0;
 }
