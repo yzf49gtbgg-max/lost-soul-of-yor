@@ -23,7 +23,7 @@ static int running = 1;
 static float px = 0.0f, pz = 6.0f, playerYaw = 0.0f;
 static float bx = 0.0f, bz = -5.7f;
 static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f;
-static float attackTimer = 0.0f, bossAttackTimer = 1.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
+static float attackTimer = 0.0f, bossAttackTimer = 1.0f, bossWindup = 0.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
 static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
@@ -202,6 +202,8 @@ static void draw_lloyd(void) {
 }
 static void draw_yor_spirit(void) {
  unsigned int body = phase==1 ? 0xffd9d6e2 : 0xffaaa0bd;
+ /* A visible ground flare warns the player before Yor's committed strike. */
+ if (bossWindup > 0.0f) box(bx,.035f,bz,2.25f,.045f,2.25f,0xff633b83);
  box(bx,0.82f,bz,.84f,1.45f,.60f,body);
  box(bx,1.75f,bz,.46f,.48f,.43f,0xffeeeaf4);
  box(bx-.64f,.95f,bz,.22f,.88f,.24f,0xffb9b1c9);
@@ -303,13 +305,14 @@ static void update(void) {
  if (dodgeTimer>0.0f) dodgeTimer-=dt;
  if (attackTimer>0.0f) attackTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
+ if (bossWindup>0.0f) bossWindup-=dt;
  if (hitFlash>0.0f) hitFlash-=dt;
  if (hurtTimer>0.0f) hurtTimer-=dt;
  guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
-  attackTimer=0.0f; bossAttackTimer=1.0f; dodgeTimer=0.0f; hurtTimer=0.0f;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; dodgeTimer=0.0f; hurtTimer=0.0f;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (victory && (pressed & PSP_CTRL_CROSS)) {
@@ -340,8 +343,14 @@ static void update(void) {
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f);  }
-  if (bossAttackTimer<=0.0f) {
-   if (distance<2.35f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
+  /* Yor telegraphs each close-range strike before the hit check. The warning
+     gives the player a readable dodge/guard window instead of instant damage. */
+  if (bossAttackTimer<=0.0f && bossWindup<=0.0f) {
+   if (distance<2.75f) bossWindup=phase==1?.48f:.36f;
+   else bossAttackTimer=.22f;
+  }
+  if (bossWindup<=0.0f && bossAttackTimer<=0.0f) {
+   if (distance<2.55f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
     if (guarding && stamina>=12.0f) { stamina-=12.0f; hitFlash=.10f; }
     else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; }
    }
