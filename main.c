@@ -21,7 +21,7 @@ PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
 static unsigned int list[262144] __attribute__((aligned(16)));
 static int running = 1;
 static float px = 0.0f, pz = 6.0f, playerYaw = 0.0f;
-static float bx = 0.0f, bz = -5.7f, bossYaw = 0.0f;
+static float bx = 0.0f, bz = -5.7f;
 static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f;
 static float attackTimer = 0.0f, bossAttackTimer = 1.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
 static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
@@ -216,7 +216,7 @@ static int camera_blocked(float x, float y, float z) {
  return point_in_collider(x,y,z,.16f);
 }
 static void camera_pose(float *ex, float *ey, float *ez, float *tx, float *ty, float *tz) {
- float dist=5.6f, horiz, dx, dy, dz, t;
+ float dist=5.6f, horiz, dx, dy, dz, t, desiredX, desiredY, desiredZ;
  *tx = targetLocked && bossHP>0.0f ? bx : px;
  *ty = targetLocked && bossHP>0.0f ? 1.05f : 1.18f;
  *tz = targetLocked && bossHP>0.0f ? bz : pz;
@@ -224,8 +224,12 @@ static void camera_pose(float *ex, float *ey, float *ez, float *tx, float *ty, f
  dx = sinf(cameraYaw)*horiz;
  dy = sinf(cameraPitch)*dist;
  dz = cosf(cameraYaw)*horiz;
+ desiredX=px+dx; desiredY=1.25f+dy; desiredZ=pz+dz;
  for (t=.08f; t<=1.0f; t+=.05f) {
-  if (camera_blocked(*tx+dx*t,*ty+dy*t,*tz+dz*t)) { dist=fmaxf(1.45f,dist*(t-.07f)); break; }
+  float sx=*tx+(desiredX-*tx)*t;
+  float sy=*ty+(desiredY-*ty)*t;
+  float sz=*tz+(desiredZ-*tz)*t;
+  if (camera_blocked(sx,sy,sz)) { dist=fmaxf(1.45f,dist*(t-.07f)); break; }
  }
  horiz = dist*cosf(cameraPitch);
  *ex = px + sinf(cameraYaw)*horiz;
@@ -318,7 +322,7 @@ static void update(void) {
   if (bossHP<=50.0f) phase=2;
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
-  if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f); bossYaw=atan2f(-vx,-vz); }
+  if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f);  }
   if (bossAttackTimer<=0.0f) {
    if (distance<2.35f && dodgeTimer<=0.0f) { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; }
    bossAttackTimer=phase==1?2.1f:1.25f;
