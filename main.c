@@ -26,7 +26,8 @@ static float bossHP = 100.0f, playerHP = 100.0f, stamina = 100.0f;
 static float attackTimer = 0.0f, bossAttackTimer = 1.0f, dodgeTimer = 0.0f, hitFlash = 0.0f;
 static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
-static int phase = 1, victory = 0, targetLocked = 0, playerMoving = 0;
+static float hurtTimer = 0.0f;
+static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -185,6 +186,7 @@ static void draw_lloyd(void) {
  draw_limb( .52f,1.55f,0.0f,.72f,.23f,stride*.72f,0xff191820);
  box(-.52f,1.14f,-.02f,.25f,.22f,.28f,0xff302d38);
  box( .52f,1.14f,-.02f,.25f,.22f,.28f,0xff302d38);
+ if (guarding) box(0.0f,1.18f,-.62f,.72f,.92f,.12f,0xff6c607d);
  /* Visible face and dark short hair follow the approved reference direction. */
  box(0.0f,2.02f+bob,-.035f,.42f,.48f,.36f,0xffc8a99c);
  box(0.0f,2.27f+bob,-.03f,.48f,.22f,.42f,0xff121218);
@@ -244,7 +246,8 @@ static void draw_hud(void) {
  rect(18,34,184,7,0xff24202a); rect(18,34,184*st,7,0xff6a9b70);
  if (bossHP>0.0f) { rect(278,16,184,12,0xff24202a); rect(278,16,184*bhp,12,0xff8b315d); }
  rect(18,246,444,2,targetLocked?0xffa36acb:0xff62566c);
- if (victory) rect(150,112,180,34,0xffd9c9ed);
+ if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
+ if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
 }
 static void init_gu(void) {
  void *fb0=(void*)0x44000000, *fb1=(void*)0x44088000, *z=(void*)0x44110000;
@@ -301,7 +304,21 @@ static void update(void) {
  if (attackTimer>0.0f) attackTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
  if (hitFlash>0.0f) hitFlash-=dt;
- if (!victory) {
+ if (hurtTimer>0.0f) hurtTimer-=dt;
+ guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
+ if (defeated && (pressed & PSP_CTRL_CROSS)) {
+  px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
+  bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
+  attackTimer=0.0f; bossAttackTimer=1.0f; dodgeTimer=0.0f; hurtTimer=0.0f;
+  phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
+ }
+ if (victory && (pressed & PSP_CTRL_CROSS)) {
+  px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
+  bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
+  attackTimer=0.0f; bossAttackTimer=1.0f; dodgeTimer=0.0f; hurtTimer=0.0f;
+  phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
+ }
+ if (!victory && !defeated) {
   if ((pressed&PSP_CTRL_CIRCLE) && stamina>=18.0f && dodgeTimer<=0.0f) {
    dodgeTimer=.30f; stamina-=18.0f;
    if (playerMoving) { dodgeX=mx; dodgeZ=mz; }
@@ -317,17 +334,21 @@ static void update(void) {
    attackTimer=.68f; stamina-=25.0f;
    if (fabsf(px-bx)<1.85f && fabsf(pz-bz)<2.15f) { bossHP-=17.0f; hitFlash=.18f; }
   }
-  if ((pressed&PSP_CTRL_CROSS) && stamina>=5.0f) stamina-=5.0f;
-  if (stamina<100.0f) stamina=fminf(100.0f,stamina+.12f);
+  if (guarding) stamina=fmaxf(0.0f,stamina-.22f);
+  else if (stamina<100.0f) stamina=fminf(100.0f,stamina+.22f);
   if (bossHP<=50.0f) phase=2;
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f);  }
   if (bossAttackTimer<=0.0f) {
-   if (distance<2.35f && dodgeTimer<=0.0f) { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; }
+   if (distance<2.35f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
+    if (guarding && stamina>=12.0f) { stamina-=12.0f; hitFlash=.10f; }
+    else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; }
+   }
    bossAttackTimer=phase==1?2.1f:1.25f;
   }
   if (playerHP<0.0f) playerHP=0.0f;
+  if (playerHP<=0.0f) { defeated=1; guarding=0; targetLocked=0; }
  }
 }
 int main(void) {
