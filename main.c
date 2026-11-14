@@ -39,6 +39,8 @@ static int tutorialScreen=0;
 static int storyScreen=0;
 static int audioChannel=-1;
 static float audioTime=0.0f;
+static volatile int audioSfx=0;
+static volatile float audioSfxTime=1.0f;
 static short audioBuffer[512] __attribute__((aligned(64)));
 static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
 static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
@@ -83,23 +85,30 @@ static const struct Collider colliders[] = {
 };
 #define COLLIDER_COUNT (sizeof(colliders) / sizeof(colliders[0]))
 
+static void trigger_sfx(int type) { audioSfx=type; audioSfxTime=0.0f; }
 static void audio_init(void) {
  audioChannel=sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL,256,PSP_AUDIO_FORMAT_STEREO);
 }
 static void audio_update(void) {
  static const float notes[8]={110.00f,164.81f,146.83f,196.00f,130.81f,164.81f,110.00f,98.00f};
- int i,step;
- float f, t, sample;
+ int i,step,effect=audioSfx;
+ float f,t,sample,et,env,tone;
  if(audioChannel<0) return;
  for(i=0;i<256;i++) {
   t=audioTime+(float)i/44100.0f;
-  step=((int)(t*1.65f))&7;
-  f=notes[step];
+  step=((int)(t*1.65f))&7; f=notes[step];
   sample=sinf(2.0f*PI*f*t)*.075f+sinf(2.0f*PI*(f*.5f)*t)*.045f;
   if(bossAwake) sample+=sinf(2.0f*PI*(f*1.5f)*t)*.025f;
-  audioBuffer[i*2]=(short)(sample*32767.0f);
-  audioBuffer[i*2+1]=(short)(sample*32767.0f);
+  if(effect>0) {
+   et=audioSfxTime+(float)i/44100.0f;
+   env=fmaxf(0.0f,1.0f-et/(effect==2?.28f:.18f));
+   tone=effect==2?180.0f+et*520.0f:(effect==3?95.0f+et*90.0f:420.0f+et*2100.0f);
+   sample+=sinf(2.0f*PI*tone*et)*env*(effect==3?.22f:.13f);
+  }
+  sample=fmaxf(-.95f,fminf(.95f,sample));
+  audioBuffer[i*2]=(short)(sample*32767.0f); audioBuffer[i*2+1]=audioBuffer[i*2];
  }
+ if(effect>0) { audioSfxTime+=256.0f/44100.0f; if(audioSfxTime>(effect==2?.28f:.18f)) { audioSfx=0; audioSfxTime=1.0f; } }
  sceAudioOutputBlocking(audioChannel,PSP_AUDIO_VOLUME_MAX,audioBuffer);
  audioTime+=256.0f/44100.0f;
 }
@@ -684,7 +693,7 @@ static void update(void) {
   if (guardAttack[gi]>0.0f) guardAttack[gi]-=dt;
   if (guardWindup[gi]>0.0f) { guardWindup[gi]-=dt; if (guardWindup[gi]<=0.0f) {
    gx=px-guardX[gi]; gz=pz-guardZ[gi]; gd=sqrtf(gx*gx+gz*gz);
-   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; } else { playerHP-=7.0f; hurtTimer=.38f; hitFlash=.13f; } }
+   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; } else { playerHP-=7.0f; hurtTimer=.38f; hitFlash=.13f; trigger_sfx(3); } }
    guardWindup[gi]=0.0f; guardAttack[gi]=1.75f;
   } }
  }
@@ -748,18 +757,18 @@ static void update(void) {
    hitFlash=.12f; save_checkpoint();
   }
   if ((pressed&PSP_CTRL_CIRCLE) && stamina>=18.0f && dodgeTimer<=0.0f) {
-   dodgeTimer=.30f; stamina-=18.0f; staminaRegenDelay=.75f;
+   dodgeTimer=.30f; stamina-=18.0f; staminaRegenDelay=.75f; trigger_sfx(4);
    if (playerMoving) { dodgeX=mx; dodgeZ=mz; }
    else { dodgeX=-sinf(playerYaw); dodgeZ=-cosf(playerYaw); }
   }
   if (dodgeTimer>0.0f) move_player(dodgeX*5.8f*dt,dodgeZ*5.8f*dt);
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
-   attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
+   attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f; trigger_sfx(1);
    if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; save_checkpoint(); } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
-   attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
+   attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f; trigger_sfx(2);
    if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; save_checkpoint(); } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
@@ -777,7 +786,7 @@ static void update(void) {
    if (bossStrikePending) {
     if (distance<(phase==1?2.55f:3.25f) && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
      if (guarding && stamina>=12.0f && player_faces_boss()) { stamina-=12.0f; hitFlash=.10f; }
-     else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; }
+     else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; trigger_sfx(3); }
     }
     bossStrikePending=0;
     bossAttackTimer=phase==1?2.1f:1.25f;
