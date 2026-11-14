@@ -232,6 +232,11 @@ static void draw_yor_spirit(void) {
  unsigned int shade=phase==1?0xffc9c2d5:0xff9586b2;
  /* A warning sigil stays on the floor while Yor commits to her strike. */
  if (bossWindup>0.0f) box(bx,.035f,bz,2.25f,.045f,2.25f,0xff633b83);
+ /* Turn Yor toward Lloyd so her weapon and robe silhouette follow the duel. */
+ sceGumPushMatrix();
+ sceGumTranslate(&(ScePspFVector3){bx,0.0f,bz});
+ sceGumRotateY(atan2f(-(px-bx),-(pz-bz)));
+ sceGumTranslate(&(ScePspFVector3){-bx,0.0f,-bz});
  /* Hovering layered spirit robes, with separated trailing tatters. */
  box(bx,1.02f+hover,bz,.92f,1.18f,.66f,robe);
  box(bx,1.45f+hover,bz+.015f,.72f,.92f,.58f,0xfff0edf5);
@@ -259,6 +264,7 @@ static void draw_yor_spirit(void) {
  box(bx-.82f-sway,1.78f+hover,bz-.12f,.10f,.10f,.10f,0xffa985dc);
  box(bx+.82f+sway,1.42f+hover,bz+.02f,.09f,.12f,.09f,0xff8051c0);
  box(bx-.55f,2.35f+hover,bz+.06f,.08f,.08f,.08f,0xffd5c2f0);
+ sceGumPopMatrix();
 }
 static int camera_blocked(float x, float y, float z) {
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
@@ -398,7 +404,7 @@ static void update(void) {
   if (bossHP<=50.0f) phase=2;
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
-  if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f);  }
+  if (distance>1.60f) { float chase=phase==1?.018f:.030f; move_boss(vx/distance*chase,vz/distance*chase); }
   /* Yor telegraphs each close-range strike before the hit check. The warning
      gives the player a readable dodge/guard window instead of instant damage. */
   if (bossStrikePending) {
