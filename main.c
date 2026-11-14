@@ -31,6 +31,8 @@ static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
 static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0, bossStrikePending = 0;
 static int bossSpecialAttack=0, bossAttackCount=0;
+static int comboStep=0;
+static float comboWindow=0.0f, riposteTimer=0.0f;
 static int flaskCharges = 3;
 static int paused = 0;
 static int bossAwake = 0;
@@ -6332,6 +6334,8 @@ static void update(void) {
  if (targetLocked) { float lx=lockedGuard>=0?guardX[lockedGuard]:bx, lz=lockedGuard>=0?guardZ[lockedGuard]:bz; playerYaw=atan2f(-(lx-px),-(lz-pz)); }
  if (dodgeTimer>0.0f) dodgeTimer-=dt;
  if (attackTimer>0.0f) attackTimer-=dt;
+ if (comboWindow>0.0f) comboWindow-=dt; else comboStep=0;
+ if (riposteTimer>0.0f) riposteTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
  for (int gi=0;gi<4;gi++) {
   float gx,gz,gd;
@@ -6339,7 +6343,7 @@ static void update(void) {
   if (guardAttack[gi]>0.0f) guardAttack[gi]-=dt;
   if (guardWindup[gi]>0.0f) { guardWindup[gi]-=dt; if (guardWindup[gi]<=0.0f) {
    gx=px-guardX[gi]; gz=pz-guardZ[gi]; gd=sqrtf(gx*gx+gz*gz);
-   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; } else { playerHP-=gi>=2?11.0f:7.0f; hurtTimer=.38f; hitFlash=.13f; trigger_sfx(3); } }
+   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; riposteTimer=.72f; comboStep=0; comboWindow=0.0f; } else { playerHP-=gi>=2?11.0f:7.0f; hurtTimer=.38f; hitFlash=.13f; trigger_sfx(3); } }
    guardWindup[gi]=0.0f; guardAttack[gi]=gi>=2?1.35f:1.75f;
   } }
  }
@@ -6412,12 +6416,39 @@ static void update(void) {
   if (dodgeTimer>0.0f) move_player(dodgeX*5.8f*dt,dodgeZ*5.8f*dt);
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
-   attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f; trigger_sfx(1);
-   if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; save_checkpoint(); } else { int i; for(i=0;i<4;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
+   int damage;
+   if (comboWindow>0.0f) comboStep=(comboStep+1)%3; else comboStep=0;
+   damage=comboStep==0?12:(comboStep==1?16:22);
+   attackTimer=comboStep==2?.48f:.32f; comboWindow=.82f;
+   stamina-=10.0f; staminaRegenDelay=.75f; trigger_sfx(1);
+   if (bossAwake && player_can_hit(2.35f+(comboStep==2?.25f:0.0f))) {
+    bossHP-=(float)damage*(riposteTimer>0.0f?1.65f:1.0f); bossFlash=.12f;
+    if(riposteTimer>0.0f) { bossWindup=0.0f; bossStrikePending=0; bossAttackTimer=fmaxf(bossAttackTimer,.72f); }
+    riposteTimer=0.0f; save_checkpoint();
+   } else {
+    int i; for(i=0;i<4;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f+(comboStep==2?.25f:0.0f))) {
+     guardHP[i]-=(float)damage*(riposteTimer>0.0f?1.65f:1.0f);
+     if(riposteTimer>0.0f) guardWindup[i]=0.0f;
+     if(guardHP[i]<=0.0f) guardAlive[i]=0;
+     riposteTimer=0.0f; save_checkpoint(); break;
+    }
+   }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
+   float bonus=riposteTimer>0.0f?1.85f:1.0f;
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f; trigger_sfx(2);
-   if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; save_checkpoint(); } else { int i; for(i=0;i<4;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
+   if (bossAwake && player_can_hit(2.85f)) {
+    bossHP-=17.0f*bonus; bossFlash=.18f;
+    if(riposteTimer>0.0f) { bossWindup=0.0f; bossStrikePending=0; bossAttackTimer=fmaxf(bossAttackTimer,1.0f); }
+    riposteTimer=0.0f; comboStep=0; comboWindow=0.0f; save_checkpoint();
+   } else {
+    int i; for(i=0;i<4;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) {
+     guardHP[i]-=24.0f*bonus;
+     if(riposteTimer>0.0f) guardWindup[i]=0.0f;
+     if(guardHP[i]<=0.0f) guardAlive[i]=0;
+     riposteTimer=0.0f; comboStep=0; comboWindow=0.0f; save_checkpoint(); break;
+    }
+   }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
@@ -6433,7 +6464,7 @@ static void update(void) {
       gives the player a readable dodge/guard window instead of instant damage. */
    if (bossStrikePending) {
     if (distance<(bossSpecialAttack?4.15f:(phase==1?2.55f:3.25f)) && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
-     if (guarding && stamina>=(bossSpecialAttack?18.0f:12.0f) && player_faces_boss()) { stamina-=bossSpecialAttack?18.0f:12.0f; hitFlash=.10f; }
+     if (guarding && stamina>=(bossSpecialAttack?18.0f:12.0f) && player_faces_boss()) { stamina-=bossSpecialAttack?18.0f:12.0f; hitFlash=.10f; riposteTimer=.82f; comboStep=0; comboWindow=0.0f; }
      else { playerHP-=bossSpecialAttack?19.0f:(phase==1?9.0f:14.0f); hitFlash=.16f; hurtTimer=.48f; trigger_sfx(3); }
     }
     bossStrikePending=0;
