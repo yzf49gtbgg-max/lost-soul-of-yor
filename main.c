@@ -502,6 +502,9 @@ static void draw_hud(void) {
  rect(18,222,54,5,0xff24202a);
  { int i; for (i=0;i<3;i++) { unsigned int c=i<flaskCharges?0xff65b7ad:0xff49434f; rect(20+i*17,211,10,10,c); rect(22+i*17,208,6,4,c); } }
  rect(18,246,444,2,targetLocked?0xffa36acb:0xff62566c);
+ if (bossAwake) draw_text(204,48,"YOR GATE",1,0xffe1d1f0);
+ else draw_text(177,48,"RUIN APPROACH",1,0xffc8b8dc);
+ draw_text(365,28,"MEMORY SHARDS",1,0xffbba2d6);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
  if (paused) {
