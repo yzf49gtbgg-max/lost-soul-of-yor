@@ -105,6 +105,7 @@ static int point_in_collider(float x, float y, float z, float padding) {
 static int player_blocked(float x, float z, float radius) {
  unsigned int i;
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
+ if (!bossAwake && fabsf(z+3.82f)<.22f && fabsf(x)<2.05f) return 1;
  for (i=0; i<COLLIDER_COUNT; i++) {
   const struct Collider *c = &colliders[i];
   if (fabsf(x-c->x) < c->hx+radius && fabsf(z-c->z) < c->hz+radius) return 1;
@@ -186,6 +187,13 @@ static void draw_world(void) {
  box( 2.05f,1.56f,-8.35f,.80f,3.12f,.96f,0xff342f3a);
  box(-2.05f,3.18f,-8.35f,.92f,.28f,1.00f,0xff514957);
  box( 2.05f,3.18f,-8.35f,.92f,.28f,1.00f,0xff514957);
+ /* Violet seal bars Yor's gate until the guards fall and memories are recovered. */
+ if (!bossAwake) {
+  box(0.0f,1.42f,-3.82f,3.95f,2.84f,.18f,0xff3e285f);
+  box(0.0f,1.42f,-3.70f,3.45f,.10f,.10f,0xffa36ad4);
+  box(-1.55f,1.42f,-3.70f,.10f,2.55f,.10f,0xff8754bd);
+  box(1.55f,1.42f,-3.70f,.10f,2.55f,.10f,0xff8754bd);
+ }
  /* Broken columns and rubble leave multiple clear paths through the ruins. */
  draw_column(-5.10f, 2.05f, 2.10f);
  draw_column( 5.20f, 1.55f, 2.20f);
@@ -356,7 +364,7 @@ static int camera_blocked(float x, float y, float z) {
 static void camera_pose(float *ex, float *ey, float *ez, float *tx, float *ty, float *tz) {
  float dist=5.6f, horiz, dx, dy, dz, t, desiredX, desiredY, desiredZ, targetX=px, targetZ=pz;
  if (targetLocked && lockedGuard>=0 && guardAlive[lockedGuard]) { targetX=guardX[lockedGuard]; targetZ=guardZ[lockedGuard]; }
- else if (targetLocked && bossHP>0.0f) { targetX=bx; targetZ=bz; }
+ else if (targetLocked && bossHP>0.0f && bossAwake) { targetX=bx; targetZ=bz; }
  *tx=targetX; *ty=targetLocked?1.05f:1.18f; *tz=targetZ;
  horiz = dist*cosf(cameraPitch);
  dx = sinf(cameraYaw)*horiz;
@@ -429,7 +437,7 @@ static void draw_hud(void) {
  float bhp=fmaxf(0.0f,fminf(1.0f,bossHP/100.0f));
  rect(18,16,184,12,0xff24202a); rect(18,16,184*php,12,0xffa52d45);
  rect(18,34,184,7,0xff24202a); rect(18,34,184*st,7,0xff6a9b70);
- if (bossHP>0.0f) { rect(278,16,184,12,0xff24202a); rect(278,16,184*bhp,12,0xff8b315d); }
+ if (bossHP>0.0f && bossAwake) { rect(278,16,184,12,0xff24202a); rect(278,16,184*bhp,12,0xff8b315d); }
  /* Nearby ruin guard vitality bars. */
  { int gi; for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
    float dx=guardX[gi]-px, dz=guardZ[gi]-pz, d=sqrtf(dx*dx+dz*dz);
@@ -492,7 +500,7 @@ static void update(void) {
    float best=10.0f, dx=bx-px, dz=bz-pz, d=sqrtf(dx*dx+dz*dz);
    int gi;
    lockedGuard=-1;
-   if (bossHP>0.0f && d<best) best=d;
+   if (bossHP>0.0f && bossAwake && d<best) best=d;
    for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
     dx=guardX[gi]-px; dz=guardZ[gi]-pz; d=sqrtf(dx*dx+dz*dz);
     if(d<best) { best=d; lockedGuard=gi; }
@@ -580,11 +588,11 @@ static void update(void) {
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
    attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
-   if (player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
+   if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
-   if (player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
+   if (bossAwake && player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
@@ -593,7 +601,7 @@ static void update(void) {
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   /* Yor waits beyond the ruined gate, then wakes when Lloyd enters her reach. */
-  if (!bossAwake && distance<8.0f) { bossAwake=1; bossAttackTimer=1.20f; }
+  if (!bossAwake && !guardAlive[0] && !guardAlive[1] && shardCount>=2 && distance<8.0f) { bossAwake=1; bossAttackTimer=1.20f; }
   if (bossAwake) {
    if (distance>1.60f) { float chase=phase==1?.018f:.030f; move_boss(vx/distance*chase,vz/distance*chase); }
    /* Yor telegraphs each close-range strike before the hit check. The warning
