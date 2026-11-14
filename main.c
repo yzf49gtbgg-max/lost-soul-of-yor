@@ -28,6 +28,7 @@ static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
 static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0, bossStrikePending = 0;
+static int flaskCharges = 3;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -210,7 +211,15 @@ static void draw_lloyd(void) {
  box(-.09f,2.03f+bob,-.228f,.045f,.035f,.025f,0xff211a1b);
  box( .09f,2.03f+bob,-.228f,.045f,.035f,.025f,0xff211a1b);
  box(0.0f,1.79f+bob,-.03f,.48f,.12f,.40f,0xff1b1a22);
- /* Sheathed sword on the back; the hand remains free for attacks. */
+ /* Drawn blade: it sweeps across the body during the quick/heavy attack window. */
+ sceGumPushMatrix();
+ sceGumTranslate(&(ScePspFVector3){.52f,1.18f,-.28f});
+ sceGumRotateY(attackTimer>0.0f ? (attackTimer>(attackTimer>.36f?.36f:.18f)?-.92f:.92f) : -.18f);
+ box(0.0f,-.43f,-.10f,.105f,.88f,.105f,0xffc5c3d0);
+ box(0.0f,.035f,-.10f,.27f,.11f,.18f,0xff41344d);
+ box(0.0f,.16f,-.10f,.12f,.16f,.13f,0xff17131e);
+ sceGumPopMatrix();
+ /* Sheathed sword remains visible on the back as a second silhouette. */
  box(.36f,1.30f,.34f,.10f,.92f,.10f,0xffb9b5c2);
  box(.36f,1.76f,.34f,.28f,.10f,.20f,0xff403348);
  sceGumPopMatrix();
@@ -262,6 +271,9 @@ static void draw_hud(void) {
  rect(18,16,184,12,0xff24202a); rect(18,16,184*php,12,0xffa52d45);
  rect(18,34,184,7,0xff24202a); rect(18,34,184*st,7,0xff6a9b70);
  if (bossHP>0.0f) { rect(278,16,184,12,0xff24202a); rect(278,16,184*bhp,12,0xff8b315d); }
+ /* Three healing flasks; filled markers show the remaining charges. */
+ rect(18,222,54,5,0xff24202a);
+ { int i; for (i=0;i<3;i++) { unsigned int c=i<flaskCharges?0xff65b7ad:0xff49434f; rect(20+i*17,211,10,10,c); rect(22+i*17,208,6,4,c); } }
  rect(18,246,444,2,targetLocked?0xffa36acb:0xff62566c);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
@@ -326,7 +338,7 @@ static void update(void) {
  guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
-  bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f;
+  bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3; flaskCharges=3;
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
@@ -337,6 +349,12 @@ static void update(void) {
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (!victory && !defeated) {
+  /* Select consumes one of three flasks and restores health, never exceeding max HP. */
+  if ((pressed&PSP_CTRL_SELECT) && flaskCharges>0 && playerHP<100.0f) {
+   playerHP=fminf(100.0f,playerHP+35.0f);
+   flaskCharges--;
+   hitFlash=.12f;
+  }
   if ((pressed&PSP_CTRL_CIRCLE) && stamina>=18.0f && dodgeTimer<=0.0f) {
    dodgeTimer=.30f; stamina-=18.0f; staminaRegenDelay=.75f;
    if (playerMoving) { dodgeX=mx; dodgeZ=mz; }
