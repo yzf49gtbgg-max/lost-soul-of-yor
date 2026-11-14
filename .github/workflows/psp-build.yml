@@ -1,0 +1,24 @@
+name: PSP build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Build EBOOT.PBP
+        run: make clean && make
+      - name: Upload PSP executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: lost-soul-of-yor-eboot
+          path: EBOOT.PBP
+          if-no-files-found: error
