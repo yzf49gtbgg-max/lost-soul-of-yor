@@ -49,9 +49,8 @@ Then launch it from PPSSPP Games. This is an unsigned homebrew package, not a co
 - Circle: dodge
 - R: hold to guard; guarding drains stamina and a successful block costs additional stamina
 - Select: consume one of three healing flasks to restore up to 35 HP
-- Cross: rest at the entrance altar to refill health, stamina and flasks; retry after defeat or restart after victory
 - Start: open the controls tutorial from the title screen, then pause or resume during play
-- Cross: continue from the controls tutorial, rest at the entrance altar, retry after defeat or restart after victory
+- Cross: continue from the tutorial; rest at the entrance altar to refill health, stamina and flasks; retry after defeat or restart after victory
 
 ## Automated build
 
