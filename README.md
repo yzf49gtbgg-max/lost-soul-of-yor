@@ -4,7 +4,7 @@ A native C/PSPSDK project for the PlayStation Portable. This is PSP homebrew, no
 
 ## Current project scope
 
-The repository contains an early, playable 3D boss-arena prototype: analog movement, quick and heavy attacks, dodge, stamina, a hold-to-guard action, a two-phase Yor boss, a health HUD, and defeat/retry flow. The current visuals are drawn from primitive geometry in code; there are no external art, texture, audio, or font asset files to download. A full campaign, finished character art, audio, and Arabic font rendering are still future work.
+The repository currently contains a native PSP 3D action prototype with a ruined approach, a rest altar, a two-phase Yor encounter, lock-on, camera controls, quick/heavy attacks, dodge, stamina, directional guard, three healing flasks, pause/resume, defeat/retry, and a human-form reunion ending scene. Character and environment visuals are still built from primitive geometry in code; there are no external model, texture, audio, or font asset files. A multi-area campaign, finished character models and animation, sound, and Arabic text rendering remain unfinished.
 
 ## Requirements
 
