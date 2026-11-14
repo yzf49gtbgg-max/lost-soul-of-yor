@@ -42,6 +42,8 @@ Then launch it from PPSSPP Games. This is an unsigned homebrew package, not a co
 ## Controls
 
 - Analog stick: move
+- D-pad: adjust camera direction and pitch
+- L: toggle lock-on when Yor is nearby
 - Square: quick attack
 - Triangle: heavy attack
 - Circle: dodge
