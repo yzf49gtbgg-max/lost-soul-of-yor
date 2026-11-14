@@ -4,7 +4,7 @@ A native C/PSPSDK project for the PlayStation Portable. This is PSP homebrew, no
 
 ## Current project scope
 
-The repository currently contains a native PSP 3D action prototype with a ruined approach, two roaming hostile guards with melee AI, three collectible memory shards, a rest altar, a two-phase Yor encounter, lock-on, camera controls, quick/heavy attacks, dodge, stamina, directional guard, three healing flasks, pause/resume, defeat/retry, and a human-form reunion ending scene. Character and environment visuals are still built from primitive geometry in code; there are no external model, texture, audio, or font asset files. A multi-area campaign, finished character models and animation, sound, and Arabic text rendering remain unfinished.
+The repository currently contains a native PSP 3D action prototype with a ruined approach, two roaming hostile guards with melee AI, three collectible memory shards and a sealed boss gate that opens after both guards are defeated and at least two shards are recovered, a rest altar, a two-phase Yor encounter, lock-on, camera controls, quick/heavy attacks, dodge, stamina, directional guard, three healing flasks, pause/resume, defeat/retry, and a human-form reunion ending scene. Character and environment visuals are still built from primitive geometry in code; there are no external model, texture, audio, or font asset files. A multi-area campaign, finished character models and animation, sound, and Arabic text rendering remain unfinished.
 
 ## Requirements
 
