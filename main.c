@@ -706,7 +706,7 @@ static void update(void) {
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   if (!load_checkpoint()) {
    px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
-   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
+   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3; bossSpecialAttack=0; bossAttackCount=0;
    bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
    guardHP[0]=42.0f; guardHP[1]=52.0f; guardAlive[0]=guardAlive[1]=1;
    shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0; phase=1;
@@ -775,7 +775,7 @@ static void update(void) {
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
   else if (stamina<100.0f) stamina=fminf(100.0f,stamina+.14f);
-  if (bossHP<=50.0f && phase==1) { phase=2; bossWindup=0.0f; bossStrikePending=0; bossAttackTimer=1.0f; bossFlash=.70f; }
+  if (bossHP<=50.0f && phase==1) { phase=2; bossWindup=0.0f; bossStrikePending=0; bossSpecialAttack=0; bossAttackCount=0; bossAttackTimer=1.0f; bossFlash=.70f; trigger_sfx(2); }
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; save_checkpoint(); }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   /* Yor waits beyond the ruined gate, then wakes when Lloyd enters her reach. */
