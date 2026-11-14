@@ -174,6 +174,11 @@ static void draw_world(void) {
  box( 6.70f,.55f,-1.40f,.42f,1.10f,4.60f,0xff37323c);
  box(-4.90f,2.55f,-6.80f,2.30f,.22f,.30f,0xff4a434f);
  box( 4.75f,2.20f,-7.20f,2.50f,.22f,.32f,0xff4a434f);
+ /* A small violet rest altar marks the start of the ruined approach. */
+ box(0.0f,.18f,5.05f,1.05f,.36f,.82f,0xff292431);
+ box(0.0f,.42f,5.05f,.72f,.16f,.58f,0xff51445f);
+ box(0.0f,.88f+sinf(worldTime*2.0f)*.07f,5.05f,.20f,.76f,.20f,0xff7a4bb4);
+ box(0.0f,1.30f+sinf(worldTime*2.0f)*.07f,5.05f,.12f,.22f,.12f,0xffc7a4f2);
 }
 
 static void draw_limb(float x, float y, float z, float length, float width, float swing, unsigned int color) {
@@ -384,6 +389,10 @@ static void update(void) {
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (!victory && !defeated) {
+  /* Cross rests at the entrance altar: refill flasks, health and stamina. */
+  if ((pressed&PSP_CTRL_CROSS) && fabsf(px)<1.45f && pz>4.15f && pz<6.25f) {
+   playerHP=100.0f; stamina=100.0f; flaskCharges=3; staminaRegenDelay=0.0f; hitFlash=.18f;
+  }
   /* Select consumes one of three flasks and restores health, never exceeding max HP. */
   if ((pressed&PSP_CTRL_SELECT) && flaskCharges>0 && playerHP<100.0f) {
    playerHP=fminf(100.0f,playerHP+35.0f);
