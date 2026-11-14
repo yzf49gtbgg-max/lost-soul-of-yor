@@ -105,7 +105,7 @@ static int point_in_collider(float x, float y, float z, float padding) {
 static int player_blocked(float x, float z, float radius) {
  unsigned int i;
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
- if (!bossAwake && fabsf(z+3.82f)<.22f && fabsf(x)<2.05f) return 1;
+ if (!bossAwake && fabsf(z+3.82f)<.22f && fabsf(x)<7.55f) return 1;
  for (i=0; i<COLLIDER_COUNT; i++) {
   const struct Collider *c = &colliders[i];
   if (fabsf(x-c->x) < c->hx+radius && fabsf(z-c->z) < c->hz+radius) return 1;
@@ -189,8 +189,8 @@ static void draw_world(void) {
  box( 2.05f,3.18f,-8.35f,.92f,.28f,1.00f,0xff514957);
  /* Violet seal bars Yor's gate until the guards fall and memories are recovered. */
  if (!bossAwake) {
-  box(0.0f,1.42f,-3.82f,3.95f,2.84f,.18f,0xff3e285f);
-  box(0.0f,1.42f,-3.70f,3.45f,.10f,.10f,0xffa36ad4);
+  box(0.0f,1.42f,-3.82f,14.90f,2.84f,.18f,0xff3e285f);
+  box(0.0f,1.42f,-3.70f,14.40f,.10f,.10f,0xffa36ad4);
   box(-1.55f,1.42f,-3.70f,.10f,2.55f,.10f,0xff8754bd);
   box(1.55f,1.42f,-3.70f,.10f,2.55f,.10f,0xff8754bd);
  }
