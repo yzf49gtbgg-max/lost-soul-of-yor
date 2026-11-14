@@ -597,6 +597,49 @@ static void draw_text(float x,float y,const char *str,int scale,unsigned int col
    if(g[row]&(1<<(4-col))) rect(x+i*6*scale+col*scale,y+row*scale,scale,scale,color);
  }
 }
+/* Compact Arabic bitmap alphabet. Arabic UI strings are stored in UTF-8;
+   this renderer decodes complete characters and lays them right-to-left. */
+static const unsigned char *arabic_rows(unsigned int c) {
+ static const unsigned char g[28][7]={
+ {14,17,17,31,17,17,17},{30,1,1,14,1,1,30},{17,17,17,17,17,17,14},{14,17,16,16,16,17,14},
+ {30,17,17,30,16,16,16},{31,16,16,30,16,16,31},{14,17,16,23,17,17,14},
+ {17,25,25,21,19,19,17},{31,4,4,4,4,4,31},{17,18,20,24,20,18,17},
+ {16,16,16,16,16,16,31},{17,27,21,21,17,17,17},{14,17,17,17,17,17,14},
+ {30,17,17,30,20,18,17},{30,17,17,30,16,16,16},{14,17,17,17,17,17,14},
+ {31,16,16,30,16,16,16},{15,16,16,14,1,1,30},{17,17,10,4,4,4,4},
+ {17,17,17,17,17,17,14},{31,4,4,4,4,4,4},{17,17,10,4,10,17,17},
+ {17,17,17,17,17,10,4},{14,17,17,17,21,18,13},{17,17,10,4,4,4,4},
+ {14,17,16,16,16,17,14},{14,17,17,17,17,17,14},{31,1,2,4,8,16,31}
+ };
+ static const unsigned char blank[7]={0,0,0,0,0,0,0};
+ if(c>=0x0621 && c<=0x063A) return g[(c-0x0621)%28];
+ if(c>=0x0641 && c<=0x064A) return g[(c-0x0641+10)%28];
+ if(c==0x0622 || c==0x0627) return g[0];
+ if(c==0x0644) return g[11];
+ if(c==0x0629) return g[3];
+ if(c==0x0649 || c==0x064A) return g[24];
+ return blank;
+}
+static int utf8_next(const unsigned char *s,int *at,unsigned int *out) {
+ unsigned char a=s[*at]; if(!a) return 0;
+ if(a<0x80){*out=a;(*at)++;return 1;}
+ if((a&0xe0)==0xc0){*out=((a&31)<<6)|(s[*at+1]&63);*at+=2;return 1;}
+ if((a&0xf0)==0xe0){*out=((a&15)<<12)|((s[*at+1]&63)<<6)|(s[*at+2]&63);*at+=3;return 1;}
+ (*at)++; *out=0; return 1;
+}
+static void draw_ar(float x,float y,const char *str,int scale,unsigned int color) {
+ unsigned int cp[160]; int n=0,at=0,j,row,col;
+ while(str[at] && n<159) { utf8_next((const unsigned char*)str,&at,&cp[n]); n++; }
+ for(j=n-1;j>=0;j--) {
+  const unsigned char *g;
+  if(cp[j]==' ') { x+=4*scale; continue; }
+  if(cp[j]>='0' && cp[j]<='9') { const unsigned char *latin=font_rows((char)cp[j]); g=latin; }
+  else g=arabic_rows(cp[j]);
+  for(row=0;row<7;row++) for(col=0;col<5;col++)
+   if(g[row]&(1<<(4-col))) rect(x+col*scale,y+row*scale,scale,scale,color);
+  x+=6*scale;
+ }
+}
 static void draw_title_screen(void) {
  rect(0,0,480,272,0xb8100d18);
  rect(38,48,404,3,0xff665578);
