@@ -238,7 +238,7 @@ static void draw_yor_spirit(void) {
  unsigned int robe=bossFlash>0.0f?0xffffffff:(phase==1?0xffe5e1ec:0xffbdb1d2);
  unsigned int shade=phase==1?0xffc9c2d5:0xff9586b2;
  /* A warning sigil stays on the floor while Yor commits to her strike. */
- if (bossWindup>0.0f) box(bx,.035f,bz,2.25f,.045f,2.25f,0xff633b83);
+ if (bossWindup>0.0f) { float warning=phase==1?2.25f:3.10f; box(bx,.035f,bz,warning,.045f,warning,0xff633b83); }
  /* Turn Yor toward Lloyd so her weapon and robe silhouette follow the duel. */
  sceGumPushMatrix();
  sceGumTranslate(&(ScePspFVector3){bx,0.0f,bz});
@@ -449,7 +449,7 @@ static void update(void) {
    /* Yor telegraphs each close-range strike before the hit check. The warning
       gives the player a readable dodge/guard window instead of instant damage. */
    if (bossStrikePending) {
-    if (distance<2.55f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
+    if (distance<(phase==1?2.55f:3.25f) && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
      if (guarding && stamina>=12.0f && player_faces_boss()) { stamina-=12.0f; hitFlash=.10f; }
      else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; }
     }
