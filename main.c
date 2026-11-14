@@ -33,6 +33,7 @@ static int paused = 0;
 static int bossAwake = 0;
 static int titleScreen = 1;
 static int lockedGuard=-1;
+static int tutorialScreen=0;
 static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
 static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
 static int guardAlive[2]={1,1};
@@ -383,11 +384,14 @@ static const unsigned char *font_rows(char c) {
  static const unsigned char T[7]={31,4,4,4,4,4,4}, U[7]={17,17,17,17,17,17,14};
  static const unsigned char Y[7]={17,17,10,4,4,4,4}, D[7]={30,17,17,17,17,17,30};
  static const unsigned char G[7]={14,17,16,23,17,17,14};
+ static const unsigned char C[7]={14,17,16,16,16,17,14}, H[7]={17,17,17,31,17,17,17};
+ static const unsigned char K[7]={17,18,20,24,20,18,17}, M[7]={17,27,21,21,17,17,17};
+ static const unsigned char V[7]={17,17,17,17,17,10,4};
  switch(c) {
   case 'A': return A; case 'D': return D; case 'E': return E; case 'F': return F;
-  case 'G': return G; case 'I': return I; case 'L': return L; case 'N': return N;
+  case 'G': return G; case 'H': return H; case 'I': return I; case 'K': return K; case 'M': return M; case 'L': return L; case 'N': return N;
   case 'O': return O; case 'P': return P; case 'R': return R; case 'S': return S;
-  case 'T': return T; case 'U': return U; case 'Y': return Y; default: return blank;
+  case 'T': return T; case 'U': return U; case 'V': return V; case 'C': return C; case 'Y': return Y; default: return blank;
  }
 }
 static void draw_text(float x,float y,const char *str,int scale,unsigned int color) {
@@ -407,6 +411,17 @@ static void draw_title_screen(void) {
  draw_text(158,124,"OF YOR",4,0xffbca2dc);
  draw_text(158,174,"PRESS START",2,0xffffffff);
  rect(172,205,136,2,0xff806a98);
+}
+static void draw_tutorial_screen(void) {
+ rect(0,0,480,272,0xc6100e18);
+ rect(42,28,396,3,0xff665578); rect(42,31,396,210,0x9e211b2a); rect(42,241,396,3,0xff665578);
+ draw_text(158,48,"CONTROLS",3,0xffe5d9f0);
+ draw_text(78,91,"MOVE ANALOG",2,0xffffffff);
+ draw_text(78,119,"ATTACK SQUARE",2,0xffffffff);
+ draw_text(78,147,"DODGE CIRCLE",2,0xffffffff);
+ draw_text(78,175,"GUARD R LOCK L",2,0xffffffff);
+ draw_text(78,203,"HEAL SELECT",2,0xffc7a4f2);
+ draw_text(280,223,"PRESS CROSS",1,0xffe5d9f0);
 }
 static void draw_hud(void) {
  float php=fmaxf(0.0f,fminf(1.0f,playerHP/100.0f));
@@ -451,7 +466,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else draw_hud();
+ draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -463,7 +478,8 @@ static void update(void) {
  float vx, vz, distance;
  sceCtrlPeekBufferPositive(&c,1);
  pressed=c.Buttons & ~old; old=c.Buttons;
- if (titleScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) titleScreen=0; return; }
+ if (titleScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) { titleScreen=0; tutorialScreen=1; } return; }
+ if (tutorialScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) tutorialScreen=0; return; }
  if (paused) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) paused=0; return; }
  if (pressed & PSP_CTRL_START) { paused=1; return; }
  if (c.Buttons & PSP_CTRL_LEFT) cameraYaw-=.025f;
