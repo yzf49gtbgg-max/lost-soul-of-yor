@@ -716,9 +716,17 @@ static void update(void) {
   for (int gi=0;gi<2;gi++) {
    float gx=px-guardX[gi], gz=pz-guardZ[gi], gd=sqrtf(gx*gx+gz*gz)+.001f;
    if (!guardAlive[gi]) continue;
-   if (gd>1.05f && gd<7.0f) {
-    float speed=.010f;
-    float nx=guardX[gi]+gx/gd*speed, nz=guardZ[gi]+gz/gd*speed;
+   if (gd>1.05f) {
+    float tx,tz,td,speed,nx,nz;
+    if (gd<7.0f) { tx=px; tz=pz; speed=1.05f*dt; }
+    else {
+     float phaseOffset=gi*PI;
+     tx=(gi==0?-1.65f:1.65f)+sinf(worldTime*.62f+phaseOffset)*1.05f;
+     tz=(gi==0?.25f:-2.45f)+cosf(worldTime*.48f+phaseOffset)*.85f;
+     speed=.42f*dt;
+    }
+    gx=tx-guardX[gi]; gz=tz-guardZ[gi]; td=sqrtf(gx*gx+gz*gz)+.001f;
+    nx=guardX[gi]+gx/td*speed; nz=guardZ[gi]+gz/td*speed;
     if (!player_blocked(nx,guardZ[gi],.34f)) guardX[gi]=nx;
     if (!player_blocked(guardX[gi],nz,.34f)) guardZ[gi]=nz;
    }
