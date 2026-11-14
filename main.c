@@ -439,7 +439,7 @@ static void update(void) {
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
   else if (stamina<100.0f) stamina=fminf(100.0f,stamina+.14f);
-  if (bossHP<=50.0f) phase=2;
+  if (bossHP<=50.0f && phase==1) { phase=2; bossWindup=0.0f; bossStrikePending=0; bossAttackTimer=1.0f; bossFlash=.70f; }
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   /* Yor waits beyond the ruined gate, then wakes when Lloyd enters her reach. */
