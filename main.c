@@ -133,7 +133,15 @@ static int player_can_hit(float range) {
  float distance=sqrtf(dx*dx+dz*dz)+.001f;
  float forwardX=-sinf(playerYaw), forwardZ=-cosf(playerYaw);
  float facing=dx*forwardX+dz*forwardZ;
- return distance<range && facing>distance*.35f;
+ int i, steps;
+ if (distance>=range || facing<=distance*.35f) return 0;
+ /* Ruin pillars and rubble block sword hits instead of allowing wall damage. */
+ steps=(int)(distance/.30f);
+ for (i=1;i<steps;i++) {
+  float t=(float)i/(float)steps;
+  if (point_in_collider(px+dx*t,1.05f,pz+dz*t,.04f)) return 0;
+ }
+ return 1;
 }
 
 static void draw_column(float x, float z, float height) {
