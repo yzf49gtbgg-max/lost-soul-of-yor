@@ -439,16 +439,17 @@ static void draw_memory_shard(int n) {
 static void draw_ruin_guard(int n) {
  float x=guardX[n], z=guardZ[n];
  float pulse=sinf(worldTime*3.0f+n)*.035f;
- float telegraph=guardWindup[n]>0.0f?sinf((.42f-guardWindup[n])*34.0f)*.10f:0.0f;
- unsigned int armor=n==0?0xff383b49:0xff493744;
+ float telegraph=guardWindup[n]>0.0f?sinf(((n>=2?.55f:.42f)-guardWindup[n])*34.0f)*.10f:0.0f;
+ unsigned int armor=n<2?(n==0?0xff383b49:0xff493744):0xff55405f;
  if (!guardAlive[n]) return;
  sceGumPushMatrix();
  sceGumTranslate(&(ScePspFVector3){x,0.0f,z});
  sceGumRotateY(atan2f(-(px-x),-(pz-z)));
+ if(n>=2) sceGumScale(&(ScePspFVector3){1.16f,1.16f,1.16f});
  box(0.0f,1.02f+pulse,0.0f,.66f,.94f,.42f,armor);
  box(0.0f,1.12f+pulse,-.24f,.54f,.82f,.10f,0xff171720);
  ellipsoid(0.0f,1.72f+pulse,0.0f,.24f,.24f,.21f,0xff292631);
- box(0.0f,1.75f+pulse,-.23f,.32f,.13f,.035f,0xff9b5aaf);
+ box(0.0f,1.75f+pulse,-.23f,.32f,.13f,.035f,n>=2?0xffd49bce:0xff9b5aaf);
  box(-.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
  box(.38f,1.48f+pulse+telegraph,0.0f,.18f,.72f,.22f,armor);
  if(guardWindup[n]>0.0f) {
@@ -459,8 +460,8 @@ static void draw_ruin_guard(int n) {
  box(.18f,.40f,0.0f,.24f,.76f,.27f,0xff24232d);
  box(-.18f,.08f,-.06f,.32f,.16f,.42f,0xff111117);
  box(.18f,.08f,-.06f,.32f,.16f,.42f,0xff111117);
- box(.53f,1.12f,-.20f,.09f,.92f,.09f,0xffa7a2b1);
- box(.53f,1.54f,-.20f,.24f,.09f,.14f,0xff51465e);
+ box(.53f,1.12f,-.20f,.09f,.92f,.09f,n>=2?0xffd0a6e8:0xffa7a2b1);
+ box(.53f,1.54f,-.20f,.24f,.09f,.14f,n>=2?0xff8e4eb8:0xff51465e);
  sceGumPopMatrix();
 }
 static void draw_yor_veiled(void) {
@@ -821,8 +822,8 @@ static void update(void) {
   if (guardAttack[gi]>0.0f) guardAttack[gi]-=dt;
   if (guardWindup[gi]>0.0f) { guardWindup[gi]-=dt; if (guardWindup[gi]<=0.0f) {
    gx=px-guardX[gi]; gz=pz-guardZ[gi]; gd=sqrtf(gx*gx+gz*gz);
-   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; } else { playerHP-=7.0f; hurtTimer=.38f; hitFlash=.13f; trigger_sfx(3); } }
-   guardWindup[gi]=0.0f; guardAttack[gi]=1.75f;
+   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; } else { playerHP-=gi>=2?11.0f:7.0f; hurtTimer=.38f; hitFlash=.13f; trigger_sfx(3); } }
+   guardWindup[gi]=0.0f; guardAttack[gi]=gi>=2?1.35f:1.75f;
   } }
  }
  if (bossWindup>0.0f) { bossWindup-=dt; if (bossWindup<=0.0f) { bossWindup=0.0f; bossStrikePending=1; } }
@@ -872,7 +873,7 @@ static void update(void) {
     if (!player_blocked(nx,guardZ[gi],.34f)) guardX[gi]=nx;
     if (!player_blocked(guardX[gi],nz,.34f)) guardZ[gi]=nz;
    }
-   if (gd<1.75f && guardAttack[gi]<=0.0f && guardWindup[gi]<=0.0f) guardWindup[gi]=.42f;
+   if (gd<(gi>=2?2.05f:1.75f) && guardAttack[gi]<=0.0f && guardWindup[gi]<=0.0f) guardWindup[gi]=gi>=2?.55f:.42f;
   }
   /* Yor gets priority when she visits; otherwise Cross rests and saves. */
   if ((pressed&PSP_CTRL_CROSS) && yorVisitReady && fabsf(px)<2.45f && pz>3.65f && pz<6.45f) {
