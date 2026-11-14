@@ -43,7 +43,7 @@ Then launch it from PPSSPP Games. This is an unsigned homebrew package, not a co
 
 - Analog stick: move
 - D-pad: adjust camera direction and pitch
-- L: toggle lock-on when Yor is nearby
+- L: lock on to the nearest nearby ruin guard or Yor
 - Square: quick attack
 - Triangle: heavy attack
 - Circle: dodge
