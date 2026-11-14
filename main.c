@@ -118,6 +118,14 @@ static void move_boss(float dx, float dz) {
  if (bz > WORLD_MAX_Z-.5f) bz = WORLD_MAX_Z-.5f;
 }
 
+static int player_can_hit(float range) {
+ float dx=bx-px, dz=bz-pz;
+ float distance=sqrtf(dx*dx+dz*dz)+.001f;
+ float forwardX=-sinf(playerYaw), forwardZ=-cosf(playerYaw);
+ float facing=dx*forwardX+dz*forwardZ;
+ return distance<range && facing>distance*.35f;
+}
+
 static void draw_column(float x, float z, float height) {
  box(x, height*.5f, z, .62f, height, .62f, 0xff282530);
  box(x, height+.08f, z, .82f, .16f, .82f, 0xff514957);
@@ -331,11 +339,11 @@ static void update(void) {
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
    attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
-   if (fabsf(px-bx)<1.55f && fabsf(pz-bz)<1.85f) { bossHP-=8.0f; hitFlash=.12f; }
+   if (player_can_hit(2.35f)) { bossHP-=8.0f; hitFlash=.12f; }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
-   if (fabsf(px-bx)<1.85f && fabsf(pz-bz)<2.15f) { bossHP-=17.0f; hitFlash=.18f; }
+   if (player_can_hit(2.85f)) { bossHP-=17.0f; hitFlash=.18f; }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
