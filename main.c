@@ -31,6 +31,7 @@ static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving 
 static int flaskCharges = 3;
 static int paused = 0;
 static int bossAwake = 0;
+static int titleScreen = 1;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -327,6 +328,41 @@ static void camera_pose(float *ex, float *ey, float *ez, float *tx, float *ty, f
  *ey = 1.25f + sinf(cameraPitch)*dist;
  *ez = pz + cosf(cameraYaw)*horiz;
 }
+static const unsigned char *font_rows(char c) {
+ static const unsigned char blank[7]={0,0,0,0,0,0,0};
+ static const unsigned char A[7]={14,17,17,31,17,17,17}, E[7]={31,16,16,30,16,16,31};
+ static const unsigned char F[7]={31,16,16,30,16,16,16}, I[7]={31,4,4,4,4,4,31};
+ static const unsigned char L[7]={16,16,16,16,16,16,31}, N[7]={17,25,25,21,19,19,17};
+ static const unsigned char O[7]={14,17,17,17,17,17,14}, P[7]={30,17,17,30,16,16,16};
+ static const unsigned char R[7]={30,17,17,30,20,18,17}, S[7]={15,16,16,14,1,1,30};
+ static const unsigned char T[7]={31,4,4,4,4,4,4}, U[7]={17,17,17,17,17,17,14};
+ static const unsigned char Y[7]={17,17,10,4,4,4,4}, D[7]={30,17,17,17,17,17,30};
+ static const unsigned char G[7]={14,17,16,23,17,17,14};
+ switch(c) {
+  case 'A': return A; case 'D': return D; case 'E': return E; case 'F': return F;
+  case 'G': return G; case 'I': return I; case 'L': return L; case 'N': return N;
+  case 'O': return O; case 'P': return P; case 'R': return R; case 'S': return S;
+  case 'T': return T; case 'U': return U; case 'Y': return Y; default: return blank;
+ }
+}
+static void draw_text(float x,float y,const char *str,int scale,unsigned int color) {
+ int i,row,col;
+ for(i=0;str[i];i++) {
+  const unsigned char *g=font_rows(str[i]);
+  for(row=0;row<7;row++) for(col=0;col<5;col++)
+   if(g[row]&(1<<(4-col))) rect(x+i*6*scale+col*scale,y+row*scale,scale,scale,color);
+ }
+}
+static void draw_title_screen(void) {
+ rect(0,0,480,272,0xb8100d18);
+ rect(38,48,404,3,0xff665578);
+ rect(38,51,404,170,0x9e211b2a);
+ rect(38,221,404,3,0xff665578);
+ draw_text(112,82,"LOST SOUL",4,0xffe5d9f0);
+ draw_text(158,124,"OF YOR",4,0xffbca2dc);
+ draw_text(158,174,"PRESS START",2,0xffffffff);
+ rect(172,205,136,2,0xff806a98);
+}
 static void draw_hud(void) {
  float php=fmaxf(0.0f,fminf(1.0f,playerHP/100.0f));
  float st=fmaxf(0.0f,fminf(1.0f,stamina/100.0f));
@@ -361,7 +397,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); if (!victory) draw_yor_spirit(); else draw_yor_ending(); draw_hud();
+ draw_world(); draw_lloyd(); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -373,6 +409,7 @@ static void update(void) {
  float vx, vz, distance;
  sceCtrlPeekBufferPositive(&c,1);
  pressed=c.Buttons & ~old; old=c.Buttons;
+ if (titleScreen) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) titleScreen=0; return; }
  if (paused) { if (pressed & (PSP_CTRL_START|PSP_CTRL_CROSS)) paused=0; return; }
  if (pressed & PSP_CTRL_START) { paused=1; return; }
  if (c.Buttons & PSP_CTRL_LEFT) cameraYaw-=.025f;
