@@ -46,11 +46,11 @@ static float audioTime=0.0f;
 static volatile int audioSfx=0;
 static volatile float audioSfxTime=1.0f;
 static short audioBuffer[512] __attribute__((aligned(64)));
-static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
-static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
-static int guardAlive[2]={1,1};
-static float shardX[3]={-3.45f,3.55f,-.15f}, shardZ[3]={3.15f,-.55f,-3.55f};
-static int shardTaken[3]={0,0,0};
+static float guardX[4]={-1.65f,1.65f,-4.15f,4.20f}, guardZ[4]={0.25f,-2.45f,-1.10f,0.85f};
+static float guardHP[4]={42.0f,52.0f,46.0f,48.0f}, guardAttack[4]={1.1f,1.8f,1.4f,1.6f}, guardWindup[4]={0.0f,0.0f,0.0f,0.0f};
+static int guardAlive[4]={1,1,1,1};
+static float shardX[5]={-3.45f,3.55f,-.15f,-5.75f,5.75f}, shardZ[5]={3.15f,-.55f,-3.55f,-2.65f,-5.90f};
+static int shardTaken[5]={0,0,0,0,0};
 static int shardCount=0;
 
 struct V3C { unsigned int color; float x, y, z; };
@@ -64,8 +64,8 @@ struct CheckpointData {
  unsigned int magic, version;
  float px,pz,playerHP,stamina,bossHP;
  int flaskCharges,phase,bossAwake,shardCount;
- int shardTaken[3],guardAlive[2];
- float guardX[2],guardZ[2],guardHP[2];
+ int shardTaken[5],guardAlive[4];
+ float guardX[4],guardZ[4],guardHP[4];
 };
 static const char savePath[]="ms0:/PSP/SAVEDATA/LOSTSOULYOR/DATA.BIN";
 
@@ -156,7 +156,7 @@ static int load_checkpoint(void) {
  stamina=fmaxf(0.0f,fminf(100.0f,d.stamina)); bossHP=fmaxf(0.0f,fminf(100.0f,d.bossHP));
  flaskCharges=d.flaskCharges<0?0:(d.flaskCharges>3?3:d.flaskCharges);
  phase=d.phase==2?2:1; bossAwake=d.bossAwake?1:0; victory=(bossHP<=0.0f); defeated=0;
- shardCount=d.shardCount<0?0:(d.shardCount>3?3:d.shardCount);
+ shardCount=d.shardCount<0?0:(d.shardCount>5?5:d.shardCount);
  memcpy(shardTaken,d.shardTaken,sizeof(shardTaken));
  memcpy(guardAlive,d.guardAlive,sizeof(guardAlive));
  memcpy(guardX,d.guardX,sizeof(guardX)); memcpy(guardZ,d.guardZ,sizeof(guardZ));
@@ -341,7 +341,7 @@ static void draw_world(void) {
  box(0.0f,.88f+sinf(worldTime*2.0f)*.07f,5.05f,.20f,.76f,.20f,0xff7a4bb4);
  box(0.0f,1.30f+sinf(worldTime*2.0f)*.07f,5.05f,.12f,.22f,.12f,0xffc7a4f2);
 
- /* Two weathered sentinels flank the approach; their violet eyes wake with Yor. */
+ /* Four weathered sentinels guard the approach; their violet eyes wake with Yor. */
  box(-6.95f,.72f,4.10f,.70f,1.44f,.62f,0xff24212c);
  box(-6.95f,1.62f,4.10f,.82f,.42f,.72f,0xff393341);
  box(-7.13f,1.66f,3.78f,.10f,.08f,.035f,bossAwake?0xffb76bdf:0xff51465c);
@@ -661,7 +661,7 @@ static void draw_tutorial_screen(void) {
  draw_ar(222,142,"دائرة للتفادي",2,0xffffffff);
  draw_ar(190,164,"زر ار للصد وزر ال للتثبيت",2,0xffffffff);
  draw_ar(220,186,"اختيار للعلاج",2,0xffc7a4f2);
- draw_ar(218,208,"اجمع الشظايا واهزم الحراس",1,0xffd7b8f2);
+ draw_ar(218,208,"اجمع اربع شظايا واهزم اربعة حراس",1,0xffd7b8f2);
  draw_ar(330,230,"اضغط اكس",1,0xffe5d9f0);
 }
 static void draw_story_screen(void) {
@@ -693,14 +693,14 @@ static void draw_hud(void) {
  rect(18,34,184,7,0xff24202a); rect(18,34,184*st,7,0xff6a9b70);
  if (bossHP>0.0f && bossAwake) { rect(278,16,184,12,0xff24202a); rect(278,16,184*bhp,12,0xff8b315d); }
  /* Nearby ruin guard vitality bars. */
- { int gi; for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
+ { int gi; for(gi=0;gi<4;gi++) if(guardAlive[gi]) {
    float dx=guardX[gi]-px, dz=guardZ[gi]-pz, d=sqrtf(dx*dx+dz*dz);
    if(d<7.0f) { float x=220.0f+guardX[gi]*12.0f; float y=56.0f+guardZ[gi]*2.0f;
-    rect(x-22,y,44,4,0xff24202a); rect(x-22,y,44.0f*fmaxf(0.0f,fminf(1.0f,guardHP[gi]/(gi==0?42.0f:52.0f))),4,0xff8c477c);
+    rect(x-22,y,44,4,0xff24202a); rect(x-22,y,44.0f*fmaxf(0.0f,fminf(1.0f,guardHP[gi]/(gi==0?42.0f:(gi==1?52.0f:(gi==2?46.0f:48.0f))))),4,0xff8c477c);
    }
   } }
  /* Three recovered memory shards. */
- { int si; for(si=0;si<3;si++) { unsigned int c=si<shardCount?0xffc8a4f2:0xff4c4057; rect(410+si*17,42,9,9,c); } }
+ { int si; for(si=0;si<5;si++) { unsigned int c=si<shardCount?0xffc8a4f2:0xff4c4057; rect(392+si*17,42,9,9,c); } }
  /* Three healing flasks; filled markers show the remaining charges. */
  rect(18,222,54,5,0xff24202a);
  { int i; for (i=0;i<3;i++) { unsigned int c=i<flaskCharges?0xff65b7ad:0xff49434f; rect(20+i*17,211,10,10,c); rect(22+i*17,208,6,4,c); } }
@@ -708,7 +708,7 @@ static void draw_hud(void) {
  if (bossAwake) draw_ar(205,48,"بوابة يور",1,0xffe1d1f0);
  else draw_ar(190,48,"طريق الاطلال",1,0xffc8b8dc);
  if (bossAwake) draw_ar(168,68,"واجه يور واستعد للمرحلة الثانية",1,0xffe2d2f2);
- else draw_ar(145,68,"اهزم الحراس واجمع شظايا الذاكرة",1,0xffd7c5e9);
+ else draw_ar(145,68,"اهزم الحراس الاربعة واجمع اربع شظايا",1,0xffd7c5e9);
  draw_ar(375,28,"شظايا الذاكرة",1,0xffbba2d6);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
@@ -753,7 +753,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); if (yorVisitReady || yorTalkStage>0) draw_yor_at_altar(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) { if (bossAwake) draw_yor_spirit(); else draw_yor_veiled(); } else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
+ draw_world(); if (yorVisitReady || yorTalkStage>0) draw_yor_at_altar(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_memory_shard(3); draw_memory_shard(4); draw_ruin_guard(0); draw_ruin_guard(1); draw_ruin_guard(2); draw_ruin_guard(3); if (!victory) { if (bossAwake) draw_yor_spirit(); else draw_yor_veiled(); } else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -815,7 +815,7 @@ static void update(void) {
  if (dodgeTimer>0.0f) dodgeTimer-=dt;
  if (attackTimer>0.0f) attackTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
- for (int gi=0;gi<2;gi++) {
+ for (int gi=0;gi<4;gi++) {
   float gx,gz,gd;
   if (!guardAlive[gi]) continue;
   if (guardAttack[gi]>0.0f) guardAttack[gi]-=dt;
@@ -834,9 +834,9 @@ static void update(void) {
   if (!load_checkpoint()) {
    px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
    bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3; bossSpecialAttack=0; bossAttackCount=0;
-   bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
-   guardHP[0]=42.0f; guardHP[1]=52.0f; guardAlive[0]=guardAlive[1]=1;
-   shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0; phase=1;
+   bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardX[2]=-4.15f; guardZ[2]=-1.10f; guardX[3]=4.20f; guardZ[3]=.85f;
+   guardHP[0]=42.0f; guardHP[1]=52.0f; guardHP[2]=46.0f; guardHP[3]=48.0f; guardAlive[0]=guardAlive[1]=guardAlive[2]=guardAlive[3]=1;
+   shardTaken[0]=shardTaken[1]=shardTaken[2]=shardTaken[3]=shardTaken[4]=0; shardCount=0; phase=1;
   }
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; staminaRegenDelay=0.0f;
   defeated=0; targetLocked=0; lockedGuard=-1; guarding=0; hitFlash=0.0f; bossFlash=0.0f;
@@ -846,12 +846,12 @@ static void update(void) {
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0;
   guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
-  guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1;
+  guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardAttack[2]=1.4f; guardAttack[3]=1.6f; guardWindup[0]=guardWindup[1]=guardWindup[2]=guardWindup[3]=0.0f; guardAlive[0]=guardAlive[1]=guardAlive[2]=guardAlive[3]=1;
   shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0; phase=1;
   victory=0; defeated=0; targetLocked=0; lockedGuard=-1; guarding=0; save_checkpoint();
  }
  if (!victory && !defeated) {
-  for (int si=0;si<3;si++) if (!shardTaken[si]) {
+  for (int si=0;si<5;si++) if (!shardTaken[si]) {
    float sx=px-shardX[si], sz=pz-shardZ[si];
    if (sx*sx+sz*sz<1.05f) { shardTaken[si]=1; shardCount++; stamina=fminf(100.0f,stamina+18.0f); save_checkpoint(); }
   }
@@ -895,7 +895,7 @@ static void update(void) {
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
    attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f; trigger_sfx(1);
-   if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; save_checkpoint(); } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
+   if (bossAwake && player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; save_checkpoint(); } else { int i; for(i=0;i<4;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; save_checkpoint(); break; } }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f; trigger_sfx(2);
@@ -908,7 +908,7 @@ static void update(void) {
   if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; save_checkpoint(); }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   /* Yor waits beyond the ruined gate, then wakes when Lloyd enters her reach. */
-  if (!bossAwake && !guardAlive[0] && !guardAlive[1] && shardCount>=2 && distance<8.0f) { bossAwake=1; bossAttackTimer=1.20f; }
+  if (!bossAwake && !guardAlive[0] && !guardAlive[1] && !guardAlive[2] && !guardAlive[3] && shardCount>=4 && distance<8.0f) { bossAwake=1; bossAttackTimer=1.20f; }
   if (bossAwake) {
    if (distance>1.60f) { float chase=phase==1?.018f:.030f; move_boss(vx/distance*chase,vz/distance*chase); }
    /* Yor telegraphs each close-range strike before the hit check. The warning
