@@ -340,6 +340,19 @@ static void draw_ruin_guard(int n) {
  box(.53f,1.54f,-.20f,.24f,.09f,.14f,0xff51465e);
  sceGumPopMatrix();
 }
+static void draw_yor_veiled(void) {
+ float sway=sinf(worldTime*1.1f)*.045f;
+ /* Before the seal opens, Yor is completely concealed by a heavy black veil. */
+ box(bx,1.05f,bz,.98f,1.72f,.72f,0xff09090f);
+ box(bx,1.64f+sway,bz-.02f,.88f,.76f,.68f,0xff050509);
+ box(bx,2.00f+sway,bz-.02f,.72f,.58f,.62f,0xff030307);
+ box(bx-.38f-sway,.72f,bz,.22f,1.12f,.28f,0xff0c0b12);
+ box(bx+.38f+sway,.72f,bz,.22f,1.12f,.28f,0xff0c0b12);
+ box(bx, .22f,bz+.02f,1.02f,.42f,.76f,0xff08080e);
+ /* Only a narrow glimpse of her mouth is visible; no eyes or nose. */
+ box(bx,1.82f+sway,bz-.345f,.22f,.045f,.025f,0xff8d6268);
+ box(bx,1.76f+sway,bz-.348f,.13f,.018f,.018f,0xff25131a);
+}
 static void draw_yor_spirit(void) {
  float hover=sinf(worldTime*2.1f)*.10f;
  float sway=sinf(worldTime*1.35f)*.075f;
@@ -537,7 +550,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
+ draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) { if (bossAwake) draw_yor_spirit(); else draw_yor_veiled(); } else draw_yor_ending(); if (titleScreen) draw_title_screen(); else if (tutorialScreen) draw_tutorial_screen(); else if (storyScreen) draw_story_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
