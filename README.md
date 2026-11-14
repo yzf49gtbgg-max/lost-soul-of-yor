@@ -50,7 +50,7 @@ Then launch it from PPSSPP Games. This is an unsigned homebrew package, not a co
 - R: hold to guard; guarding drains stamina and a successful block costs additional stamina
 - Select: consume one of three healing flasks to restore up to 35 HP
 - Cross: rest at the entrance altar to refill health, stamina and flasks; retry after defeat or restart after victory
-- Start: pause or resume; Cross also resumes from the pause overlay
+- Start: begin from the title screen, then pause or resume; Cross also starts or resumes
 
 ## Automated build
 
