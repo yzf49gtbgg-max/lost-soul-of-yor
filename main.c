@@ -390,6 +390,7 @@ static void draw_memory_shard(int n) {
 static void draw_ruin_guard(int n) {
  float x=guardX[n], z=guardZ[n];
  float pulse=sinf(worldTime*3.0f+n)*.035f;
+ float telegraph=guardWindup[n]>0.0f?sinf((.42f-guardWindup[n])*34.0f)*.10f:0.0f;
  unsigned int armor=n==0?0xff383b49:0xff493744;
  if (!guardAlive[n]) return;
  sceGumPushMatrix();
@@ -400,7 +401,11 @@ static void draw_ruin_guard(int n) {
  ellipsoid(0.0f,1.72f+pulse,0.0f,.24f,.24f,.21f,0xff292631);
  box(0.0f,1.75f+pulse,-.23f,.32f,.13f,.035f,0xff9b5aaf);
  box(-.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
- box(.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
+ box(.38f,1.48f+pulse+telegraph,0.0f,.18f,.72f,.22f,armor);
+ if(guardWindup[n]>0.0f) {
+  box(x,.035f,z,1.35f,.035f,1.35f,0xff71365f);
+  box(.53f,1.28f+pulse+telegraph,-.20f,.10f,.96f,.10f,0xffd49bce);
+ }
  box(-.18f,.40f,0.0f,.24f,.76f,.27f,0xff24232d);
  box(.18f,.40f,0.0f,.24f,.76f,.27f,0xff24232d);
  box(-.18f,.08f,-.06f,.32f,.16f,.42f,0xff111117);
