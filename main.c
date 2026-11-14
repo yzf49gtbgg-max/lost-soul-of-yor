@@ -273,6 +273,27 @@ static void draw_yor_spirit(void) {
  box(bx-.55f,2.35f+hover,bz+.06f,.08f,.08f,.08f,0xffd5c2f0);
  sceGumPopMatrix();
 }
+static void draw_yor_ending(void) {
+ float pulse=sinf(worldTime*2.0f)*.06f;
+ /* The spirit dissolves into a floating violet gem as Yor returns to her human form. */
+ box(bx+1.05f,1.18f+pulse,bz,.34f,.52f,.34f,0xff7040a8);
+ box(bx+1.05f,1.18f+pulse,bz,.16f,.72f,.16f,0xffc39aef);
+ box(bx+1.05f,1.18f+pulse,bz,.72f,.08f,.72f,0xff352342);
+ /* Natural Yor: long black dress, pale face and long hair falling over her eyes. */
+ box(bx,0.88f,bz,.76f,1.48f,.50f,0xff17151d);
+ box(bx,1.43f,bz-.015f,.62f,.62f,.46f,0xff211d28);
+ box(bx,1.92f,bz-.015f,.38f,.46f,.34f,0xffd8c2b8);
+ box(bx,2.14f,bz-.04f,.46f,.20f,.38f,0xff101016);
+ box(bx-.20f,1.72f,bz-.10f,.12f,.88f,.18f,0xff09090f);
+ box(bx+.20f,1.70f,bz-.10f,.12f,.90f,.18f,0xff09090f);
+ box(bx,1.96f,bz-.205f,.34f,.22f,.035f,0xff17131c);
+ box(bx-.49f,1.02f,bz,.20f,.92f,.24f,0xff1b1821);
+ box(bx+.49f,1.02f,bz,.20f,.92f,.24f,0xff1b1821);
+ box(bx-.51f,.53f,bz,.16f,.42f,.18f,0xff0e0d13);
+ box(bx+.51f,.53f,bz,.16f,.42f,.18f,0xff0e0d13);
+ /* A soft aura frames the reunion without obscuring the characters. */
+ box(bx,2.55f+pulse,bz,.08f,.08f,.08f,0xffd2b6f0);
+}
 static int camera_blocked(float x, float y, float z) {
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
  return point_in_collider(x,y,z,.16f);
@@ -332,7 +353,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); if (!victory) draw_yor_spirit(); draw_hud();
+ draw_world(); draw_lloyd(); if (!victory) draw_yor_spirit(); else draw_yor_ending(); draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
