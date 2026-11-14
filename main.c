@@ -27,7 +27,7 @@ static float attackTimer = 0.0f, bossAttackTimer = 1.0f, bossWindup = 0.0f, dodg
 static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f;
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
-static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0;
+static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0, bossStrikePending = 0;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -312,13 +312,13 @@ static void update(void) {
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; dodgeTimer=0.0f; hurtTimer=0.0f;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (victory && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
-  attackTimer=0.0f; bossAttackTimer=1.0f; dodgeTimer=0.0f; hurtTimer=0.0f;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (!victory && !defeated) {
@@ -345,16 +345,17 @@ static void update(void) {
   if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f);  }
   /* Yor telegraphs each close-range strike before the hit check. The warning
      gives the player a readable dodge/guard window instead of instant damage. */
-  if (bossAttackTimer<=0.0f && bossWindup<=0.0f) {
-   if (distance<2.75f) bossWindup=phase==1?.48f:.36f;
-   else bossAttackTimer=.22f;
-  }
-  if (bossWindup<=0.0f && bossAttackTimer<=0.0f) {
+  if (bossWindup>0.0f && bossWindup<=dt) { bossWindup=0.0f; bossStrikePending=1; }
+  if (bossStrikePending) {
    if (distance<2.55f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
     if (guarding && stamina>=12.0f) { stamina-=12.0f; hitFlash=.10f; }
     else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; }
    }
+   bossStrikePending=0;
    bossAttackTimer=phase==1?2.1f:1.25f;
+  } else if (bossAttackTimer<=0.0f && bossWindup<=0.0f) {
+   if (distance<2.75f) bossWindup=phase==1?.48f:.36f;
+   else bossAttackTimer=.22f;
   }
   if (playerHP<0.0f) playerHP=0.0f;
   if (playerHP<=0.0f) { defeated=1; guarding=0; targetLocked=0; }
