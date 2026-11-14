@@ -620,7 +620,11 @@ static void draw_hud(void) {
  }
 }
 static void init_gu(void) {
- void *fb0=(void*)0x44000000, *fb1=(void*)0x44088000, *z=(void*)0x44110000;
+ /* sceGuDrawBuffer/sceGuDispBuffer/sceGuDepthBuffer take offsets within
+    EDRAM, not cached/uncached CPU virtual addresses. Passing 0x44000000
+    here can point the GU outside its framebuffer region and produce a
+    solid/incorrectly coloured display on hardware and some emulators. */
+ void *fb0=(void*)0x00000, *fb1=(void*)0x88000, *z=(void*)0x110000;
  sceGuInit(); sceGuStart(GU_DIRECT,list);
  sceGuDrawBuffer(GU_PSM_8888,fb0,BW); sceGuDispBuffer(W,H,fb1,BW); sceGuDepthBuffer(z,BW);
  sceGuOffset(2048-W/2,2048-H/2); sceGuViewport(2048,2048,W,H); sceGuScissor(0,0,W,H); sceGuEnable(GU_SCISSOR_TEST);
