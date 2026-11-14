@@ -49,6 +49,10 @@ static int shardCount=0;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
+#define SPHERE_LAT 6
+#define SPHERE_LON 10
+static ScePspFVector3 sphereVerts[(SPHERE_LAT+1)*(SPHERE_LON+1)];
+static unsigned short sphereIndices[SPHERE_LAT*SPHERE_LON*6];
 struct Collider { float x, y, z, hx, hy, hz; };
 struct CheckpointData {
  unsigned int magic, version;
@@ -160,6 +164,34 @@ static void setup_callbacks(void) {
  if (t >= 0) sceKernelStartThread(t, 0, 0);
 }
 
+static void sphere_init(void) {
+ int i,j,k=0;
+ for(i=0;i<=SPHERE_LAT;i++) {
+  float lat=-PI*.5f+PI*(float)i/(float)SPHERE_LAT;
+  float ring=cosf(lat), y=sinf(lat);
+  for(j=0;j<=SPHERE_LON;j++) {
+   float lon=2.0f*PI*(float)j/(float)SPHERE_LON;
+   sphereVerts[i*(SPHERE_LON+1)+j].x=ring*cosf(lon);
+   sphereVerts[i*(SPHERE_LON+1)+j].y=y;
+   sphereVerts[i*(SPHERE_LON+1)+j].z=ring*sinf(lon);
+  }
+ }
+ for(i=0;i<SPHERE_LAT;i++) for(j=0;j<SPHERE_LON;j++) {
+  unsigned short a=(unsigned short)(i*(SPHERE_LON+1)+j);
+  unsigned short b=(unsigned short)(a+SPHERE_LON+1);
+  sphereIndices[k++]=a; sphereIndices[k++]=b; sphereIndices[k++]=a+1;
+  sphereIndices[k++]=a+1; sphereIndices[k++]=b; sphereIndices[k++]=b+1;
+ }
+}
+static void ellipsoid(float x,float y,float z,float sx,float sy,float sz,unsigned int color) {
+ sceGumPushMatrix();
+ sceGumTranslate(&(ScePspFVector3){x,y,z});
+ sceGumScale(&(ScePspFVector3){sx,sy,sz});
+ sceGuColor(color);
+ sceGuDrawArray(GU_TRIANGLES,GU_VERTEX_32BITF|GU_TRANSFORM_3D,
+  SPHERE_LAT*SPHERE_LON*6, sphereIndices, sphereVerts);
+ sceGumPopMatrix();
+}
 static void rect(float x, float y, float w, float h, unsigned int color) {
  struct V2C v[4] = {{color,x,y},{color,x+w,y},{color,x,y+h},{color,x+w,y+h}};
  sceGuDisable(GU_DEPTH_TEST);
@@ -328,7 +360,7 @@ static void draw_lloyd(void) {
  box( .52f,1.14f,-.02f,.25f,.22f,.28f,0xff302d38);
  if (guarding) box(0.0f,1.18f,-.62f,.72f,.92f,.12f,0xff6c607d);
  /* Visible face and dark short hair follow the approved reference direction. */
- box(0.0f,2.02f+bob,-.035f,.42f,.48f,.36f,0xffc8a99c);
+ ellipsoid(0.0f,2.02f+bob,-.035f,.21f,.24f,.18f,0xffc8a99c);
  box(0.0f,2.27f+bob,-.03f,.48f,.22f,.42f,0xff121218);
  box(-.17f,2.13f+bob,-.22f,.16f,.22f,.12f,0xff17171e);
  box( .14f,2.13f+bob,-.22f,.16f,.22f,.12f,0xff17171e);
@@ -365,7 +397,7 @@ static void draw_ruin_guard(int n) {
  sceGumRotateY(atan2f(-(px-x),-(pz-z)));
  box(0.0f,1.02f+pulse,0.0f,.66f,.94f,.42f,armor);
  box(0.0f,1.12f+pulse,-.24f,.54f,.82f,.10f,0xff171720);
- box(0.0f,1.72f+pulse,0.0f,.48f,.48f,.42f,0xff292631);
+ ellipsoid(0.0f,1.72f+pulse,0.0f,.24f,.24f,.21f,0xff292631);
  box(0.0f,1.75f+pulse,-.23f,.32f,.13f,.035f,0xff9b5aaf);
  box(-.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
  box(.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
@@ -410,7 +442,7 @@ static void draw_yor_spirit(void) {
  box(bx-.34f-sway,.25f+hover,bz-.10f,.20f,.62f,.22f,robe);
  box(bx+.36f+sway,.28f+hover,bz-.08f,.18f,.58f,.20f,robe);
  /* Veiled head, long dark hair and pale spectral face. */
- box(bx,1.92f+hover,bz,.48f,.50f,.44f,0xfff2eff8);
+ ellipsoid(bx,1.92f+hover,bz,.24f,.25f,.22f,0xfff2eff8);
  box(bx,2.13f+hover,bz-.035f,.52f,.25f,.48f,0xffd8d2e3);
  box(bx,1.92f+hover,bz-.255f,.38f,.23f,.035f,0xff756b86);
  box(bx-.22f,1.58f+hover+hair,bz-.12f,.13f,.82f,.16f,0xff282331);
@@ -441,7 +473,7 @@ static void draw_yor_ending(void) {
  /* Natural Yor: long black dress, pale face and long hair falling over her eyes. */
  box(bx,0.88f,bz,.76f,1.48f,.50f,0xff17151d);
  box(bx,1.43f,bz-.015f,.62f,.62f,.46f,0xff211d28);
- box(bx,1.92f,bz-.015f,.38f,.46f,.34f,0xffd8c2b8);
+ ellipsoid(bx,1.92f,bz-.015f,.19f,.23f,.17f,0xffd8c2b8);
  box(bx,2.14f,bz-.04f,.46f,.20f,.38f,0xff101016);
  box(bx-.20f,1.72f,bz-.10f,.12f,.88f,.18f,0xff09090f);
  box(bx+.20f,1.70f,bz-.10f,.12f,.90f,.18f,0xff09090f);
@@ -746,7 +778,7 @@ static void update(void) {
  }
 }
 int main(void) {
- setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); init_gu(); audio_start();
+ setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); sphere_init(); init_gu(); audio_start();
  while (running) { update(); frame(); }
  sceGuTerm(); sceKernelExitGame(); return 0;
 }
