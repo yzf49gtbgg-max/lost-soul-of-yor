@@ -305,7 +305,7 @@ static void update(void) {
  if (dodgeTimer>0.0f) dodgeTimer-=dt;
  if (attackTimer>0.0f) attackTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
- if (bossWindup>0.0f) bossWindup-=dt;
+ if (bossWindup>0.0f) { bossWindup-=dt; if (bossWindup<=0.0f) { bossWindup=0.0f; bossStrikePending=1; } }
  if (hitFlash>0.0f) hitFlash-=dt;
  if (hurtTimer>0.0f) hurtTimer-=dt;
  guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
@@ -345,7 +345,6 @@ static void update(void) {
   if (distance>1.60f) { move_boss(vx/distance*.018f,vz/distance*.018f);  }
   /* Yor telegraphs each close-range strike before the hit check. The warning
      gives the player a readable dodge/guard window instead of instant damage. */
-  if (bossWindup>0.0f && bossWindup<=dt) { bossWindup=0.0f; bossStrikePending=1; }
   if (bossStrikePending) {
    if (distance<2.55f && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
     if (guarding && stamina>=12.0f) { stamina-=12.0f; hitFlash=.10f; }
