@@ -36,7 +36,7 @@ static int paused = 0;
 static int bossAwake = 0;
 static int yorTalkStage = 0;
 static int yorVisitReady = 0;
-static float yorVisitCooldown = 12.0f;
+static float yorVisitCooldown = 4.0f;
 static int titleScreen = 1;
 static int lockedGuard=-1;
 static int tutorialScreen=0;
@@ -654,14 +654,14 @@ static void draw_tutorial_screen(void) {
  rect(0,0,480,272,0xc6100e18);
  rect(42,28,396,3,0xff665578); rect(42,31,396,210,0x9e211b2a); rect(42,241,396,3,0xff665578);
  draw_ar(184,48,"التحكم",3,0xffe5d9f0);
- draw_ar(235,78,"الحركة بالعصا",2,0xffffffff);
- draw_ar(215,100,"هجوم مربع",2,0xffffffff);
- draw_ar(215,122,"تفادي دائرة",2,0xffffffff);
- draw_ar(205,144,"ار للصد وال للتثبيت",2,0xffffffff);
- draw_ar(225,166,"علاج اختيار",2,0xffc7a4f2);
- draw_ar(225,192,"اجمع الشظايا",2,0xffd7b8f2);
- draw_ar(215,214,"اهزم الحراس",2,0xffd7b8f2);
- draw_ar(330,232,"اضغط اكس",1,0xffe5d9f0);
+ draw_ar(222,76,"الحركة بالعصا",2,0xffffffff);
+ draw_ar(220,98,"مربع هجوم سريع",2,0xffffffff);
+ draw_ar(214,120,"مثلث هجوم قوي",2,0xffffffff);
+ draw_ar(222,142,"دائرة للتفادي",2,0xffffffff);
+ draw_ar(190,164,"زر ار للصد وزر ال للتثبيت",2,0xffffffff);
+ draw_ar(220,186,"اختيار للعلاج",2,0xffc7a4f2);
+ draw_ar(218,208,"اجمع الشظايا واهزم الحراس",1,0xffd7b8f2);
+ draw_ar(330,230,"اضغط اكس",1,0xffe5d9f0);
 }
 static void draw_story_screen(void) {
  rect(0,0,480,272,0xc6100e18);
