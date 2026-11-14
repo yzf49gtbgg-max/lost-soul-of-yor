@@ -148,6 +148,10 @@ static int player_can_hit(float range) {
  return 1;
 }
 
+static int player_faces_enemy(float ex,float ez) {
+ float dx=ex-px, dz=ez-pz, d=sqrtf(dx*dx+dz*dz)+.001f;
+ return dx*(-sinf(playerYaw))+dz*(-cosf(playerYaw))>d*.35f;
+}
 static int player_can_hit_enemy(float ex,float ez,float range) {
  float dx=ex-px, dz=ez-pz, distance=sqrtf(dx*dx+dz*dz)+.001f;
  float facing=dx*(-sinf(playerYaw))+dz*(-cosf(playerYaw));
@@ -481,7 +485,7 @@ static void update(void) {
   if (guardAttack[gi]>0.0f) guardAttack[gi]-=dt;
   if (guardWindup[gi]>0.0f) { guardWindup[gi]-=dt; if (guardWindup[gi]<=0.0f) {
    gx=px-guardX[gi]; gz=pz-guardZ[gi]; gd=sqrtf(gx*gx+gz*gz);
-   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { playerHP-=7.0f; hurtTimer=.38f; hitFlash=.13f; }
+   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { if (guarding && stamina>=8.0f && player_faces_enemy(guardX[gi],guardZ[gi])) { stamina-=8.0f; hitFlash=.08f; } else { playerHP-=7.0f; hurtTimer=.38f; hitFlash=.13f; } }
    guardWindup[gi]=0.0f; guardAttack[gi]=1.75f;
   } }
  }
