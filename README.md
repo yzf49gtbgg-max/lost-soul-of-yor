@@ -4,7 +4,7 @@ A native C/PSPSDK project for the PlayStation Portable. This is PSP homebrew, no
 
 ## Current project scope
 
-The repository contains an early, playable boss-arena prototype: analog movement, quick and heavy attacks, a dodge, stamina, a two-phase Yor boss, and a simple HUD. The current visuals are drawn from primitive geometry in code; there are no external art, texture, audio, or font asset files to download. The campaign, finished character art, audio, and Arabic font rendering described as future work are not part of this prototype.
+The repository contains an early, playable 3D boss-arena prototype: analog movement, quick and heavy attacks, dodge, stamina, a hold-to-guard action, a two-phase Yor boss, a health HUD, and defeat/retry flow. The current visuals are drawn from primitive geometry in code; there are no external art, texture, audio, or font asset files to download. A full campaign, finished character art, audio, and Arabic font rendering are still future work.
 
 ## Requirements
 
@@ -45,7 +45,8 @@ Then launch it from PPSSPP Games. This is an unsigned homebrew package, not a co
 - Square: quick attack
 - Triangle: heavy attack
 - Circle: dodge
-- Cross: stamina action placeholder
+- R: hold to guard; guarding drains stamina and a successful block costs additional stamina
+- Cross: retry the fight after defeat or restart after victory
 - Start: exit
 
 ## Automated build
