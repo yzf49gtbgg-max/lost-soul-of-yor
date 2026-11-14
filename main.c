@@ -317,7 +317,7 @@ static void update(void) {
  }
  if (victory && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
-  bossHP=100.0f; playerHP=100.0f; stamina=100.0f;
+  bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f;
   attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
