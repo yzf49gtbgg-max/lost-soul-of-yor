@@ -32,6 +32,9 @@ static int flaskCharges = 3;
 static int paused = 0;
 static int bossAwake = 0;
 static int titleScreen = 1;
+static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
+static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
+static int guardAlive[2]={1,1};
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -145,6 +148,11 @@ static int player_can_hit(float range) {
  return 1;
 }
 
+static int player_can_hit_enemy(float ex,float ez,float range) {
+ float dx=ex-px, dz=ez-pz, distance=sqrtf(dx*dx+dz*dz)+.001f;
+ float facing=dx*(-sinf(playerYaw))+dz*(-cosf(playerYaw));
+ return distance<range && facing>distance*.35f;
+}
 static void draw_column(float x, float z, float height) {
  box(x, height*.5f, z, .62f, height, .62f, 0xff282530);
  box(x, height+.08f, z, .82f, .16f, .82f, 0xff514957);
@@ -238,6 +246,28 @@ static void draw_lloyd(void) {
  /* Sheathed sword remains visible on the back as a second silhouette. */
  box(.36f,1.30f,.34f,.10f,.92f,.10f,0xffb9b5c2);
  box(.36f,1.76f,.34f,.28f,.10f,.20f,0xff403348);
+ sceGumPopMatrix();
+}
+static void draw_ruin_guard(int n) {
+ float x=guardX[n], z=guardZ[n];
+ float pulse=sinf(worldTime*3.0f+n)*.035f;
+ unsigned int armor=n==0?0xff383b49:0xff493744;
+ if (!guardAlive[n]) return;
+ sceGumPushMatrix();
+ sceGumTranslate(&(ScePspFVector3){x,0.0f,z});
+ sceGumRotateY(atan2f(-(px-x),-(pz-z)));
+ box(0.0f,1.02f+pulse,0.0f,.66f,.94f,.42f,armor);
+ box(0.0f,1.12f+pulse,-.24f,.54f,.82f,.10f,0xff171720);
+ box(0.0f,1.72f+pulse,0.0f,.48f,.48f,.42f,0xff292631);
+ box(0.0f,1.75f+pulse,-.23f,.32f,.13f,.035f,0xff9b5aaf);
+ box(-.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
+ box(.38f,1.48f+pulse,0.0f,.18f,.72f,.22f,armor);
+ box(-.18f,.40f,0.0f,.24f,.76f,.27f,0xff24232d);
+ box(.18f,.40f,0.0f,.24f,.76f,.27f,0xff24232d);
+ box(-.18f,.08f,-.06f,.32f,.16f,.42f,0xff111117);
+ box(.18f,.08f,-.06f,.32f,.16f,.42f,0xff111117);
+ box(.53f,1.12f,-.20f,.09f,.92f,.09f,0xffa7a2b1);
+ box(.53f,1.54f,-.20f,.24f,.09f,.14f,0xff51465e);
  sceGumPopMatrix();
 }
 static void draw_yor_spirit(void) {
@@ -397,7 +427,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else draw_hud();
+ draw_world(); draw_lloyd(); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -438,6 +468,16 @@ static void update(void) {
  if (dodgeTimer>0.0f) dodgeTimer-=dt;
  if (attackTimer>0.0f) attackTimer-=dt;
  if (bossAttackTimer>0.0f) bossAttackTimer-=dt;
+ for (int gi=0;gi<2;gi++) {
+  float gx,gz,gd;
+  if (!guardAlive[gi]) continue;
+  if (guardAttack[gi]>0.0f) guardAttack[gi]-=dt;
+  if (guardWindup[gi]>0.0f) { guardWindup[gi]-=dt; if (guardWindup[gi]<=0.0f) {
+   gx=px-guardX[gi]; gz=pz-guardZ[gi]; gd=sqrtf(gx*gx+gz*gz);
+   if (gd<1.85f && dodgeTimer<=0.0f && hurtTimer<=0.0f) { playerHP-=7.0f; hurtTimer=.38f; hitFlash=.13f; }
+   guardWindup[gi]=0.0f; guardAttack[gi]=1.75f;
+  } }
+ }
  if (bossWindup>0.0f) { bossWindup-=dt; if (bossWindup<=0.0f) { bossWindup=0.0f; bossStrikePending=1; } }
  if (hitFlash>0.0f) hitFlash-=dt;
   if (bossFlash>0.0f) bossFlash-=dt;
@@ -446,16 +486,27 @@ static void update(void) {
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (victory && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (!victory && !defeated) {
+  for (int gi=0;gi<2;gi++) {
+   float gx=px-guardX[gi], gz=pz-guardZ[gi], gd=sqrtf(gx*gx+gz*gz)+.001f;
+   if (!guardAlive[gi]) continue;
+   if (gd>1.05f && gd<7.0f) {
+    float speed=.010f;
+    float nx=guardX[gi]+gx/gd*speed, nz=guardZ[gi]+gz/gd*speed;
+    if (!player_blocked(nx,guardZ[gi],.34f)) guardX[gi]=nx;
+    if (!player_blocked(guardX[gi],nz,.34f)) guardZ[gi]=nz;
+   }
+   if (gd<1.75f && guardAttack[gi]<=0.0f && guardWindup[gi]<=0.0f) guardWindup[gi]=.42f;
+  }
   /* Cross rests at the entrance altar: refill flasks, health and stamina. */
   if ((pressed&PSP_CTRL_CROSS) && fabsf(px)<1.45f && pz>4.15f && pz<6.25f) {
    playerHP=100.0f; stamina=100.0f; flaskCharges=3; staminaRegenDelay=0.0f; hitFlash=.18f;
@@ -475,11 +526,11 @@ static void update(void) {
   else move_player(mx*3.2f*dt,mz*3.2f*dt);
   if ((pressed&PSP_CTRL_SQUARE) && attackTimer<=0.0f && stamina>=10.0f) {
    attackTimer=.36f; stamina-=10.0f; staminaRegenDelay=.75f;
-   if (player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; }
+   if (player_can_hit(2.35f)) { bossHP-=8.0f; bossFlash=.12f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.25f)) { guardHP[i]-=12.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
   }
   if ((pressed&PSP_CTRL_TRIANGLE) && attackTimer<=0.0f && stamina>=25.0f) {
    attackTimer=.68f; stamina-=25.0f; staminaRegenDelay=.90f;
-   if (player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; }
+   if (player_can_hit(2.85f)) { bossHP-=17.0f; bossFlash=.18f; } else { int i; for(i=0;i<2;i++) if(guardAlive[i] && player_can_hit_enemy(guardX[i],guardZ[i],2.70f)) { guardHP[i]-=24.0f; if(guardHP[i]<=0.0f) guardAlive[i]=0; break; } }
   }
   if (guarding) { stamina=fmaxf(0.0f,stamina-.22f); staminaRegenDelay=.20f; }
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
