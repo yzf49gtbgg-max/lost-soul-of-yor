@@ -540,8 +540,8 @@ static void draw_yor_ending(void) {
  box(bx,2.55f+pulse,bz,.08f,.08f,.08f,0xffd2b6f0);
  /* Final reunion dialogue. */
  rect(76,218,328,4,0xffbda9d4); rect(76,222,328,44,0xe51a1522); rect(76,266,328,3,0xffbda9d4);
- draw_text(156,230,"THANK YOU LLOYD",2,0xfff0e8fa);
- draw_text(190,248,"YOU FREED ME",1,0xffcdb5e8);
+ draw_ar(150,230,"شكرا لك يا لويد",2,0xfff0e8fa);
+ draw_ar(190,248,"لقد حررتني",1,0xffcdb5e8);
 }
 static int camera_blocked(float x, float y, float z) {
  if (x < WORLD_MIN_X || x > WORLD_MAX_X || z < WORLD_MIN_Z || z > WORLD_MAX_Z) return 1;
@@ -645,31 +645,31 @@ static void draw_title_screen(void) {
  rect(38,48,404,3,0xff665578);
  rect(38,51,404,170,0x9e211b2a);
  rect(38,221,404,3,0xff665578);
- draw_text(112,82,"LOST SOUL",4,0xffe5d9f0);
- draw_text(158,124,"OF YOR",4,0xffbca2dc);
- draw_text(158,174,"PRESS START",2,0xffffffff);
+ draw_ar(155,82,"روح يور",4,0xffe5d9f0);
+ draw_ar(135,124,"الضائعة",4,0xffbca2dc);
+ draw_ar(174,174,"اضغط ابدأ",2,0xffffffff);
  rect(172,205,136,2,0xff806a98);
 }
 static void draw_tutorial_screen(void) {
  rect(0,0,480,272,0xc6100e18);
  rect(42,28,396,3,0xff665578); rect(42,31,396,210,0x9e211b2a); rect(42,241,396,3,0xff665578);
- draw_text(158,48,"CONTROLS",3,0xffe5d9f0);
- draw_text(78,78,"MOVE ANALOG",2,0xffffffff);
- draw_text(78,100,"ATTACK SQUARE",2,0xffffffff);
- draw_text(78,122,"DODGE CIRCLE",2,0xffffffff);
- draw_text(78,144,"GUARD R LOCK L",2,0xffffffff);
- draw_text(78,166,"HEAL SELECT",2,0xffc7a4f2);
- draw_text(78,192,"FIND SHARDS",2,0xffd7b8f2);
- draw_text(78,214,"DEFEAT GUARDS",2,0xffd7b8f2);
- draw_text(280,232,"PRESS CROSS",1,0xffe5d9f0);
+ draw_ar(184,48,"التحكم",3,0xffe5d9f0);
+ draw_ar(235,78,"الحركة بالعصا",2,0xffffffff);
+ draw_ar(215,100,"هجوم مربع",2,0xffffffff);
+ draw_ar(215,122,"تفادي دائرة",2,0xffffffff);
+ draw_ar(205,144,"صد ار تثبيت ال",2,0xffffffff);
+ draw_ar(225,166,"علاج اختيار",2,0xffc7a4f2);
+ draw_ar(225,192,"اجمع الشظايا",2,0xffd7b8f2);
+ draw_ar(215,214,"اهزم الحراس",2,0xffd7b8f2);
+ draw_ar(330,232,"اضغط اكس",1,0xffe5d9f0);
 }
 static void draw_story_screen(void) {
  rect(0,0,480,272,0xc6100e18);
  rect(42,30,396,3,0xff665578); rect(42,33,396,204,0x9e211b2a); rect(42,237,396,3,0xff665578);
- draw_text(150,60,"YOR IS LOST",3,0xffe5d9f0);
- draw_text(92,116,"LLOYD MUST FIND HER",2,0xffffffff);
- draw_text(118,151,"ENTER THE RUINS",2,0xffcdb5e8);
- draw_text(280,215,"PRESS CROSS",1,0xffe5d9f0);
+ draw_ar(180,60,"يور ضائعة",3,0xffe5d9f0);
+ draw_ar(165,116,"على لويد ان يجدها",2,0xffffffff);
+ draw_ar(190,151,"ادخل الاطلال",2,0xffcdb5e8);
+ draw_ar(330,215,"اضغط اكس",1,0xffe5d9f0);
 }
 static void draw_yor_at_altar(void) {
  float x=1.55f, z=5.05f, h=sinf(worldTime*2.0f)*.07f;
@@ -704,25 +704,25 @@ static void draw_hud(void) {
  rect(18,222,54,5,0xff24202a);
  { int i; for (i=0;i<3;i++) { unsigned int c=i<flaskCharges?0xff65b7ad:0xff49434f; rect(20+i*17,211,10,10,c); rect(22+i*17,208,6,4,c); } }
  rect(18,246,444,2,targetLocked?0xffa36acb:0xff62566c);
- if (bossAwake) draw_text(204,48,"YOR GATE",1,0xffe1d1f0);
- else draw_text(177,48,"RUIN APPROACH",1,0xffc8b8dc);
- draw_text(365,28,"MEMORY SHARDS",1,0xffbba2d6);
+ if (bossAwake) draw_ar(205,48,"بوابة يور",1,0xffe1d1f0);
+ else draw_ar(190,48,"طريق الاطلال",1,0xffc8b8dc);
+ draw_ar(375,28,"شظايا الذاكرة",1,0xffbba2d6);
  if (victory) { rect(150,108,180,4,0xffd9c9ed); rect(150,112,180,34,0xff393044); rect(150,146,180,4,0xffd9c9ed); }
  if (defeated) { rect(112,102,256,5,0xffa52d45); rect(112,107,256,58,0xff21151f); rect(112,165,256,5,0xffa52d45); rect(222,184,36,20,0xffd9c9ed); }
  if (yorVisitReady || yorTalkStage>0) {
   rect(74,202,332,4,0xffbda9d4); rect(74,206,332,58,0xe51a1522); rect(74,264,332,3,0xffbda9d4);
   if (yorTalkStage==0) {
-   draw_text(137,222,"TALK TO YOR",2,0xfff0e8fa);
-   draw_text(128,244,"PRESS CROSS",1,0xffcdb5e8);
+   draw_ar(180,222,"تحدث مع يور",2,0xfff0e8fa);
+   draw_ar(330,244,"اضغط اكس",1,0xffcdb5e8);
   } else if (yorTalkStage==1) {
-   draw_text(135,220,"I AM HERE",2,0xfff0e8fa);
-   draw_text(110,244,"YOU FOUND ME",1,0xffcdb5e8);
+   draw_ar(200,220,"انا هنا",2,0xfff0e8fa);
+   draw_ar(245,244,"لقد وجدتني",1,0xffcdb5e8);
   } else if (yorTalkStage==2) {
-   draw_text(124,220,"KEEP GOING",2,0xfff0e8fa);
-   draw_text(102,244,"MY MEMORY RETURNS",1,0xffcdb5e8);
+   draw_ar(190,220,"واصل التقدم",2,0xfff0e8fa);
+   draw_ar(280,244,"ذاكرتي تعود",1,0xffcdb5e8);
   } else {
-   draw_text(132,220,"THANK YOU",2,0xfff0e8fa);
-   draw_text(114,244,"I WILL WAIT HERE",1,0xffcdb5e8);
+   draw_ar(200,220,"شكرا لك",2,0xfff0e8fa);
+   draw_ar(280,244,"سأنتظرك هنا",1,0xffcdb5e8);
   }
  }
  if (paused) {
