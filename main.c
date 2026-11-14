@@ -590,7 +590,7 @@ static void draw_hud(void) {
  { int gi; for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
    float dx=guardX[gi]-px, dz=guardZ[gi]-pz, d=sqrtf(dx*dx+dz*dz);
    if(d<7.0f) { float x=220.0f+guardX[gi]*12.0f; float y=56.0f+guardZ[gi]*2.0f;
-    rect(x-22,y,44,4,0xff24202a); rect(x-22,y,44.0f*(guardHP[gi]/52.0f),4,0xff8c477c);
+    rect(x-22,y,44,4,0xff24202a); rect(x-22,y,44.0f*fmaxf(0.0f,fminf(1.0f,guardHP[gi]/(gi==0?42.0f:52.0f))),4,0xff8c477c);
    }
   } }
  /* Three recovered memory shards. */
