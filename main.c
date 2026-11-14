@@ -30,6 +30,7 @@ static float cameraYaw = 0.0f, cameraPitch = 0.24f, gait = 0.0f, worldTime = 0.0
 static float dodgeX = 0.0f, dodgeZ = -1.0f;
 static float hurtTimer = 0.0f;
 static int phase = 1, victory = 0, defeated = 0, targetLocked = 0, playerMoving = 0, guarding = 0, bossStrikePending = 0;
+static int bossSpecialAttack=0, bossAttackCount=0;
 static int flaskCharges = 3;
 static int paused = 0;
 static int bossAwake = 0;
@@ -443,7 +444,7 @@ static void draw_yor_spirit(void) {
  unsigned int robe=bossFlash>0.0f?0xffffffff:(phase==1?0xffe5e1ec:0xffbdb1d2);
  unsigned int shade=phase==1?0xffc9c2d5:0xff9586b2;
  /* A warning sigil stays on the floor while Yor commits to her strike. */
- if (bossWindup>0.0f) { float warning=phase==1?2.25f:3.10f; box(bx,.035f,bz,warning,.045f,warning,0xff633b83); }
+ if (bossWindup>0.0f) { float warning=bossSpecialAttack?4.35f:(phase==1?2.25f:3.10f); box(bx,.035f,bz,warning,.045f,warning,0xff633b83); if(bossSpecialAttack) box(bx,.05f,bz,.18f,.06f,warning,0xffb26bd0); }
  /* Turn Yor toward Lloyd so her weapon and robe silhouette follow the duel. */
  sceGumPushMatrix();
  sceGumTranslate(&(ScePspFVector3){bx,0.0f,bz});
@@ -784,14 +785,14 @@ static void update(void) {
    /* Yor telegraphs each close-range strike before the hit check. The warning
       gives the player a readable dodge/guard window instead of instant damage. */
    if (bossStrikePending) {
-    if (distance<(phase==1?2.55f:3.25f) && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
-     if (guarding && stamina>=12.0f && player_faces_boss()) { stamina-=12.0f; hitFlash=.10f; }
-     else { playerHP-=phase==1?9.0f:14.0f; hitFlash=.16f; hurtTimer=.48f; trigger_sfx(3); }
+    if (distance<(bossSpecialAttack?4.15f:(phase==1?2.55f:3.25f)) && dodgeTimer<=0.0f && hurtTimer<=0.0f) {
+     if (guarding && stamina>=(bossSpecialAttack?18.0f:12.0f) && player_faces_boss()) { stamina-=bossSpecialAttack?18.0f:12.0f; hitFlash=.10f; }
+     else { playerHP-=bossSpecialAttack?19.0f:(phase==1?9.0f:14.0f); hitFlash=.16f; hurtTimer=.48f; trigger_sfx(3); }
     }
     bossStrikePending=0;
     bossAttackTimer=phase==1?2.1f:1.25f;
    } else if (bossAttackTimer<=0.0f && bossWindup<=0.0f) {
-    if (distance<2.75f) bossWindup=phase==1?.48f:.36f;
+    if (distance<2.75f) { bossSpecialAttack=(phase==2 && (++bossAttackCount%3==0)); bossWindup=bossSpecialAttack?.78f:(phase==1?.48f:.36f); }
     else bossAttackTimer=.22f;
    }
   }
