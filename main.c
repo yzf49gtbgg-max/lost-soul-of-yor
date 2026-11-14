@@ -99,6 +99,19 @@ static void audio_update(void) {
  sceAudioOutputBlocking(audioChannel,PSP_AUDIO_VOLUME_MAX,audioBuffer);
  audioTime+=256.0f/44100.0f;
 }
+static int audio_thread(SceSize args, void *argp) {
+ (void)args; (void)argp;
+ audio_init();
+ if(audioChannel<0) return 0;
+ while(running) audio_update();
+ sceAudioChRelease(audioChannel);
+ audioChannel=-1;
+ return 0;
+}
+static void audio_start(void) {
+ SceUID tid=sceKernelCreateThread("yor_audio",audio_thread,0x20,0x4000,THREAD_ATTR_USER,0);
+ if(tid>=0) sceKernelStartThread(tid,0,0);
+}
 static void save_checkpoint(void) {
  struct CheckpointData d;
  SceUID fd;
@@ -733,8 +746,7 @@ static void update(void) {
  }
 }
 int main(void) {
- setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); init_gu(); audio_init();
- while (running) { update(); frame(); audio_update(); }
- if(audioChannel>=0) sceAudioChRelease(audioChannel);
+ setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); init_gu(); audio_start();
+ while (running) { update(); frame(); }
  sceGuTerm(); sceKernelExitGame(); return 0;
 }
