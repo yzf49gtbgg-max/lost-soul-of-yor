@@ -400,6 +400,13 @@ static void draw_hud(void) {
  rect(18,16,184,12,0xff24202a); rect(18,16,184*php,12,0xffa52d45);
  rect(18,34,184,7,0xff24202a); rect(18,34,184*st,7,0xff6a9b70);
  if (bossHP>0.0f) { rect(278,16,184,12,0xff24202a); rect(278,16,184*bhp,12,0xff8b315d); }
+ /* Nearby ruin guard vitality bars. */
+ { int gi; for(gi=0;gi<2;gi++) if(guardAlive[gi]) {
+   float dx=guardX[gi]-px, dz=guardZ[gi]-pz, d=sqrtf(dx*dx+dz*dz);
+   if(d<7.0f) { float x=220.0f+guardX[gi]*12.0f; float y=56.0f+guardZ[gi]*2.0f;
+    rect(x-22,y,44,4,0xff24202a); rect(x-22,y,44.0f*(guardHP[gi]/52.0f),4,0xff8c477c);
+   }
+  } }
  /* Three healing flasks; filled markers show the remaining charges. */
  rect(18,222,54,5,0xff24202a);
  { int i; for (i=0;i<3;i++) { unsigned int c=i<flaskCharges?0xff65b7ad:0xff49434f; rect(20+i*17,211,10,10,c); rect(22+i*17,208,6,4,c); } }
