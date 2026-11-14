@@ -424,12 +424,14 @@ static void draw_tutorial_screen(void) {
  rect(0,0,480,272,0xc6100e18);
  rect(42,28,396,3,0xff665578); rect(42,31,396,210,0x9e211b2a); rect(42,241,396,3,0xff665578);
  draw_text(158,48,"CONTROLS",3,0xffe5d9f0);
- draw_text(78,91,"MOVE ANALOG",2,0xffffffff);
- draw_text(78,119,"ATTACK SQUARE",2,0xffffffff);
- draw_text(78,147,"DODGE CIRCLE",2,0xffffffff);
- draw_text(78,175,"GUARD R LOCK L",2,0xffffffff);
- draw_text(78,203,"HEAL SELECT",2,0xffc7a4f2);
- draw_text(280,223,"PRESS CROSS",1,0xffe5d9f0);
+ draw_text(78,78,"MOVE ANALOG",2,0xffffffff);
+ draw_text(78,100,"ATTACK SQUARE",2,0xffffffff);
+ draw_text(78,122,"DODGE CIRCLE",2,0xffffffff);
+ draw_text(78,144,"GUARD R LOCK L",2,0xffffffff);
+ draw_text(78,166,"HEAL SELECT",2,0xffc7a4f2);
+ draw_text(78,192,"FIND SHARDS",2,0xffd7b8f2);
+ draw_text(78,214,"DEFEAT GUARDS",2,0xffd7b8f2);
+ draw_text(280,232,"PRESS CROSS",1,0xffe5d9f0);
 }
 static void draw_hud(void) {
  float php=fmaxf(0.0f,fminf(1.0f,playerHP/100.0f));
