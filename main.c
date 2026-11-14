@@ -2,6 +2,7 @@
 #include <pspdisplay.h>
 #include <pspctrl.h>
 #include <pspiofilemgr.h>
+#include <pspaudio.h>
 #include <pspgu.h>
 #include <pspgum.h>
 #include <math.h>
@@ -36,6 +37,9 @@ static int titleScreen = 1;
 static int lockedGuard=-1;
 static int tutorialScreen=0;
 static int storyScreen=0;
+static int audioChannel=-1;
+static float audioTime=0.0f;
+static short audioBuffer[512] __attribute__((aligned(64)));
 static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
 static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
 static int guardAlive[2]={1,1};
@@ -75,6 +79,26 @@ static const struct Collider colliders[] = {
 };
 #define COLLIDER_COUNT (sizeof(colliders) / sizeof(colliders[0]))
 
+static void audio_init(void) {
+ audioChannel=sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL,256,PSP_AUDIO_FORMAT_STEREO);
+}
+static void audio_update(void) {
+ static const float notes[8]={110.00f,164.81f,146.83f,196.00f,130.81f,164.81f,110.00f,98.00f};
+ int i,step;
+ float f, t, sample;
+ if(audioChannel<0) return;
+ for(i=0;i<256;i++) {
+  t=audioTime+(float)i/44100.0f;
+  step=((int)(t*1.65f))&7;
+  f=notes[step];
+  sample=sinf(2.0f*PI*f*t)*.075f+sinf(2.0f*PI*(f*.5f)*t)*.045f;
+  if(bossAwake) sample+=sinf(2.0f*PI*(f*1.5f)*t)*.025f;
+  audioBuffer[i*2]=(short)(sample*32767.0f);
+  audioBuffer[i*2+1]=(short)(sample*32767.0f);
+ }
+ sceAudioOutputBlocking(audioChannel,PSP_AUDIO_VOLUME_MAX,audioBuffer);
+ audioTime+=256.0f/44100.0f;
+}
 static void save_checkpoint(void) {
  struct CheckpointData d;
  SceUID fd;
@@ -709,7 +733,8 @@ static void update(void) {
  }
 }
 int main(void) {
- setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); init_gu();
- while (running) { update(); frame(); }
+ setup_callbacks(); sceCtrlSetSamplingCycle(0); sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG); load_checkpoint(); init_gu(); audio_init();
+ while (running) { update(); frame(); audio_update(); }
+ if(audioChannel>=0) sceAudioChRelease(audioChannel);
  sceGuTerm(); sceKernelExitGame(); return 0;
 }
