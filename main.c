@@ -35,6 +35,9 @@ static int titleScreen = 1;
 static float guardX[2]={-1.65f,1.65f}, guardZ[2]={0.25f,-2.45f};
 static float guardHP[2]={42.0f,52.0f}, guardAttack[2]={1.1f,1.8f}, guardWindup[2]={0.0f,0.0f};
 static int guardAlive[2]={1,1};
+static float shardX[3]={-3.45f,3.55f,-.15f}, shardZ[3]={3.15f,-.55f,-3.55f};
+static int shardTaken[3]={0,0,0};
+static int shardCount=0;
 
 struct V3C { unsigned int color; float x, y, z; };
 struct V2C { unsigned int color; float x, y; };
@@ -252,6 +255,13 @@ static void draw_lloyd(void) {
  box(.36f,1.76f,.34f,.28f,.10f,.20f,0xff403348);
  sceGumPopMatrix();
 }
+static void draw_memory_shard(int n) {
+ float bob=sinf(worldTime*2.6f+n*1.7f)*.12f;
+ if (shardTaken[n]) return;
+ box(shardX[n],.76f+bob,shardZ[n],.28f,.42f,.28f,0xff7042a8);
+ box(shardX[n],.78f+bob,shardZ[n],.12f,.54f,.12f,0xffd4b5f2);
+ box(shardX[n],.78f+bob,shardZ[n],.42f,.08f,.42f,0xff3e2a55);
+}
 static void draw_ruin_guard(int n) {
  float x=guardX[n], z=guardZ[n];
  float pulse=sinf(worldTime*3.0f+n)*.035f;
@@ -411,6 +421,8 @@ static void draw_hud(void) {
     rect(x-22,y,44,4,0xff24202a); rect(x-22,y,44.0f*(guardHP[gi]/52.0f),4,0xff8c477c);
    }
   } }
+ /* Three recovered memory shards. */
+ { int si; for(si=0;si<3;si++) { unsigned int c=si<shardCount?0xffc8a4f2:0xff4c4057; rect(410+si*17,42,9,9,c); } }
  /* Three healing flasks; filled markers show the remaining charges. */
  rect(18,222,54,5,0xff24202a);
  { int i; for (i=0;i<3;i++) { unsigned int c=i<flaskCharges?0xff65b7ad:0xff49434f; rect(20+i*17,211,10,10,c); rect(22+i*17,208,6,4,c); } }
@@ -438,7 +450,7 @@ static void frame(void) {
  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity();
  sceGumLookAt(&(ScePspFVector3){ex,ey,ez},&(ScePspFVector3){tx,ty,tz},&(ScePspFVector3){0,1,0});
  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
- draw_world(); draw_lloyd(); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else draw_hud();
+ draw_world(); draw_lloyd(); draw_memory_shard(0); draw_memory_shard(1); draw_memory_shard(2); draw_ruin_guard(0); draw_ruin_guard(1); if (!victory) draw_yor_spirit(); else draw_yor_ending(); if (titleScreen) draw_title_screen(); else draw_hud();
  sceGuFinish(); sceGuSync(0,0); sceDisplayWaitVblankStart(); sceGuSwapBuffers();
 }
 static void update(void) {
@@ -497,16 +509,20 @@ static void update(void) {
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1; shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (victory && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1; shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0;
   phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
  }
  if (!victory && !defeated) {
+  for (int si=0;si<3;si++) if (!shardTaken[si]) {
+   float sx=px-shardX[si], sz=pz-shardZ[si];
+   if (sx*sx+sz*sz<1.05f) { shardTaken[si]=1; shardCount++; stamina=fminf(100.0f,stamina+18.0f); }
+  }
   for (int gi=0;gi<2;gi++) {
    float gx=px-guardX[gi], gz=pz-guardZ[gi], gd=sqrtf(gx*gx+gz*gz)+.001f;
    if (!guardAlive[gi]) continue;
