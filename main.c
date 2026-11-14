@@ -100,7 +100,7 @@ static int load_checkpoint(void) {
  px=d.px; pz=d.pz; playerHP=fmaxf(1.0f,fminf(100.0f,d.playerHP));
  stamina=fmaxf(0.0f,fminf(100.0f,d.stamina)); bossHP=fmaxf(0.0f,fminf(100.0f,d.bossHP));
  flaskCharges=d.flaskCharges<0?0:(d.flaskCharges>3?3:d.flaskCharges);
- phase=d.phase==2?2:1; bossAwake=d.bossAwake?1:0;
+ phase=d.phase==2?2:1; bossAwake=d.bossAwake?1:0; victory=(bossHP<=0.0f); defeated=0;
  shardCount=d.shardCount<0?0:(d.shardCount>3?3:d.shardCount);
  memcpy(shardTaken,d.shardTaken,sizeof(shardTaken));
  memcpy(guardAlive,d.guardAlive,sizeof(guardAlive));
@@ -588,16 +588,24 @@ static void update(void) {
  if (hurtTimer>0.0f) hurtTimer-=dt;
  guarding = (!victory && !defeated && (c.Buttons & PSP_CTRL_RTRIGGER) && stamina>0.0f);
  if (defeated && (pressed & PSP_CTRL_CROSS)) {
-  px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
-  bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1; shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0;
-  phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
+  if (!load_checkpoint()) {
+   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
+   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
+   bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
+   guardHP[0]=42.0f; guardHP[1]=52.0f; guardAlive[0]=guardAlive[1]=1;
+   shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0; phase=1;
+  }
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; staminaRegenDelay=0.0f;
+  defeated=0; targetLocked=0; lockedGuard=-1; guarding=0; hitFlash=0.0f; bossFlash=0.0f;
  }
  if (victory && (pressed & PSP_CTRL_CROSS)) {
   px=0.0f; pz=6.0f; playerYaw=0.0f; bx=0.0f; bz=-5.7f;
   bossHP=100.0f; playerHP=100.0f; stamina=100.0f; staminaRegenDelay=0.0f; flaskCharges=3;
-  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0; guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f; guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1; shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0;
-  phase=1; victory=0; defeated=0; targetLocked=0; guarding=0;
+  attackTimer=0.0f; bossAttackTimer=1.0f; bossWindup=0.0f; bossStrikePending=0; dodgeTimer=0.0f; hurtTimer=0.0f; bossAwake=0;
+  guardX[0]=-1.65f; guardZ[0]=.25f; guardX[1]=1.65f; guardZ[1]=-2.45f;
+  guardHP[0]=42.0f; guardHP[1]=52.0f; guardAttack[0]=1.1f; guardAttack[1]=1.8f; guardWindup[0]=guardWindup[1]=0.0f; guardAlive[0]=guardAlive[1]=1;
+  shardTaken[0]=shardTaken[1]=shardTaken[2]=0; shardCount=0; phase=1;
+  victory=0; defeated=0; targetLocked=0; lockedGuard=-1; guarding=0; save_checkpoint();
  }
  if (!victory && !defeated) {
   for (int si=0;si<3;si++) if (!shardTaken[si]) {
@@ -623,7 +631,7 @@ static void update(void) {
   if ((pressed&PSP_CTRL_SELECT) && flaskCharges>0 && playerHP<100.0f) {
    playerHP=fminf(100.0f,playerHP+35.0f);
    flaskCharges--;
-   hitFlash=.12f;
+   hitFlash=.12f; save_checkpoint();
   }
   if ((pressed&PSP_CTRL_CIRCLE) && stamina>=18.0f && dodgeTimer<=0.0f) {
    dodgeTimer=.30f; stamina-=18.0f; staminaRegenDelay=.75f;
@@ -644,7 +652,7 @@ static void update(void) {
   else if (staminaRegenDelay>0.0f) staminaRegenDelay=fmaxf(0.0f,staminaRegenDelay-dt);
   else if (stamina<100.0f) stamina=fminf(100.0f,stamina+.14f);
   if (bossHP<=50.0f && phase==1) { phase=2; bossWindup=0.0f; bossStrikePending=0; bossAttackTimer=1.0f; bossFlash=.70f; }
-  if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; }
+  if (bossHP<=0.0f) { bossHP=0.0f; victory=1; targetLocked=0; save_checkpoint(); }
   vx=px-bx; vz=pz-bz; distance=sqrtf(vx*vx+vz*vz)+.001f;
   /* Yor waits beyond the ruined gate, then wakes when Lloyd enters her reach. */
   if (!bossAwake && !guardAlive[0] && !guardAlive[1] && shardCount>=2 && distance<8.0f) { bossAwake=1; bossAttackTimer=1.20f; }
@@ -665,7 +673,7 @@ static void update(void) {
    }
   }
   if (playerHP<0.0f) playerHP=0.0f;
-  if (playerHP<=0.0f) { defeated=1; guarding=0; targetLocked=0; save_checkpoint(); }
+  if (playerHP<=0.0f) { defeated=1; guarding=0; targetLocked=0; }
  }
 }
 int main(void) {
